@@ -1,65 +1,84 @@
-import Image from "next/image";
+'use client'
+import { useATLAS } from '@/app/hooks/useATLAS'
+import TopBar from '@/app/components/TopBar'
+import StatusCard from '@/app/components/StatusCard'
 
 export default function Home() {
+  const { data, connected, lastUpdate } = useATLAS()
+  const { risk, parliament, portfolio, status } = data
+
+  const fmtPct = (v?: number) => v !== undefined ? `${(v*100).toFixed(2)}%` : '--'
+  const fmt3   = (v?: number) => v !== undefined ? v.toFixed(3) : '--'
+  const fmt2   = (v?: number) => v !== undefined ? v.toFixed(2) : '--'
+
+  const pnlClass   = portfolio?.daily_pnl_pct !== undefined ? portfolio.daily_pnl_pct >= 0 ? 'positive' : 'negative' : ''
+  const verdictClass = parliament?.verdict?.includes('BUY') ? 'positive' : parliament?.verdict?.includes('SELL') || parliament?.verdict?.includes('REDUCE') ? 'negative' : ''
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div style={{ minHeight:'100vh' }}>
+      <TopBar status={status} connected={connected} lastUpdate={lastUpdate} />
+      <div style={{ padding:16, display:'flex', flexDirection:'column', gap:12 }}>
+
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(130px,1fr))', gap:8 }}>
+          <StatusCard label="Risk Level" value={risk?.risk_level||'--'} colorClass={`risk-${risk?.risk_level||'LOW'}`} size="lg"/>
+          <StatusCard label="G Value" value={fmt3(risk?.G)} colorClass={risk?.G && risk.G > 0.70 ? 'warning' : ''}/>
+          <StatusCard label="VPIN" value={fmt3(risk?.VPIN)} colorClass={risk?.VPIN && risk.VPIN > 0.65 ? 'warning' : ''}/>
+          <StatusCard label="Entropy" value={fmt3(risk?.entropy)}/>
+          <StatusCard label="Pos Scale" value={fmtPct(risk?.position_scale)}/>
+          <StatusCard label="Cash Buffer" value={fmtPct(risk?.cash_fraction)}/>
+          <StatusCard label="Stop %" value={fmtPct(risk?.stop_pct)}/>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(130px,1fr))', gap:8 }}>
+          <StatusCard label="Parliament" value={parliament?.verdict||'--'} colorClass={verdictClass} size="lg"/>
+          <StatusCard label="Score" value={fmt2(parliament?.score)}/>
+          {Object.entries(parliament?.brain_weights||{}).map(([b,w]) => (
+            <StatusCard key={b} label={b.replace('_',' ').toUpperCase()} value={`${(Number(w)*100).toFixed(0)}%`}/>
+          ))}
         </div>
-      </main>
+
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(130px,1fr))', gap:8 }}>
+          <StatusCard label="Total Equity" value={`€${(portfolio?.total_equity||0).toLocaleString()}`} size="lg"/>
+          <StatusCard label="Daily P&L" value={fmtPct(portfolio?.daily_pnl_pct)} colorClass={pnlClass}/>
+          <StatusCard label="Cash" value={`€${(portfolio?.cash_balance||0).toLocaleString()}`}/>
+          <StatusCard label="Drawdown" value={fmtPct(portfolio?.drawdown)} colorClass={portfolio?.drawdown && portfolio.drawdown < -0.05 ? 'negative' : ''}/>
+          <StatusCard label="Positions" value={portfolio?.positions?.length||0}/>
+          <StatusCard label="Mode" value={portfolio?.mode||'PAPER'} colorClass={portfolio?.mode==='LIVE' ? 'positive' : 'info'}/>
+        </div>
+
+        {portfolio?.positions && portfolio.positions.length > 0 && (
+          <div className="atlas-card">
+            <div className="atlas-label" style={{ marginBottom:8 }}>Open Positions</div>
+            <table style={{ width:'100%', borderCollapse:'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom:'1px solid var(--atlas-border)' }}>
+                  {['Symbol','Region','Size','Entry','Current','P&L'].map(h => (
+                    <th key={h} className="atlas-label" style={{ textAlign:'left', padding:'4px 8px' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {portfolio.positions.map((p,i) => (
+                  <tr key={i} style={{ borderBottom:'1px solid var(--atlas-border)' }}>
+                    <td style={{ padding:'4px 8px', color:'var(--atlas-accent)' }}>{p.symbol}</td>
+                    <td style={{ padding:'4px 8px' }} className="atlas-label">{p.region||'--'}</td>
+                    <td style={{ padding:'4px 8px' }}>{p.size}</td>
+                    <td style={{ padding:'4px 8px' }}>{p.entry_price?.toFixed(2)||'--'}</td>
+                    <td style={{ padding:'4px 8px' }}>{p.current_price?.toFixed(2)||'--'}</td>
+                    <td style={{ padding:'4px 8px' }} className={p.pnl_pct !== undefined ? p.pnl_pct >= 0 ? 'positive' : 'negative' : ''}>
+                      {p.pnl_pct !== undefined ? `${(p.pnl_pct*100).toFixed(2)}%` : '--'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <div style={{ color:'var(--atlas-muted)', fontSize:10, textAlign:'center', padding:'8px 0' }}>
+          ATLAS — Adaptive Trading & Learning Autonomous System
+        </div>
+      </div>
     </div>
-  );
+  )
 }
