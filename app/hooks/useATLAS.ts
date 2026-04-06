@@ -37,7 +37,7 @@ export function useATLAS() {
       } catch { setConnected(false); setTimeout(connect, 3000) }
     }
     connect()
-    pollRef.current = setInterval(fetchAll, 5000)
+    pollRef.current = setInterval(fetchAll, 2000)
     fetchAll()
     return () => {
       wsRef.current?.close()
