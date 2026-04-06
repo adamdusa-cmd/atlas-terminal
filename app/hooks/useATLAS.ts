@@ -4,9 +4,10 @@ import { api, WS_URL } from '@/app/lib/api'
 import type { ATLASSnapshot } from '@/app/types/atlas'
 
 export function useATLAS() {
-  const [data, setData] = useState<ATLASSnapshot>({
+  const [data, setData] = useState<any>({
     risk: null, parliament: null, portfolio: null,
     signals: null, surfaces: null, brief: null, status: null,
+    universe: null,
   })
   const [connected, setConnected] = useState(false)
   const [lastUpdate, setLastUpdate] = useState('')
@@ -14,12 +15,13 @@ export function useATLAS() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const fetchAll = useCallback(async () => {
-    const [risk, parliament, portfolio, signals, surfaces, brief, status] =
+    const [risk, parliament, portfolio, signals, surfaces, brief, status, universe] =
       await Promise.all([
         api.risk(), api.parliament(), api.portfolio(),
         api.signals(), api.surfaces(), api.brief(), api.status(),
+        api.universe(),
       ])
-    setData({ risk, parliament, portfolio, signals, surfaces, brief, status } as ATLASSnapshot)
+    setData({ risk, parliament, portfolio, signals, surfaces, brief, status, universe })
     setLastUpdate(new Date().toISOString())
   }, [])
 

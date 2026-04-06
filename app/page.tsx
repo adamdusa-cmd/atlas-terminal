@@ -41,6 +41,11 @@ export default function Home() {
             border:'1px solid var(--atlas-border)', borderRadius:3 }}>
             Brief
           </Link>
+          <Link href="/universe" style={{ color:'var(--atlas-accent)', fontSize:11,
+            textDecoration:'none', padding:'4px 10px',
+            border:'1px solid var(--atlas-border)', borderRadius:3 }}>
+            Universe
+          </Link>
         </div>
 
 
