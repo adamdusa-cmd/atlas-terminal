@@ -31,6 +31,16 @@ export default function Home() {
             border:'1px solid var(--atlas-border)', borderRadius:3 }}>
             Parliament
           </Link>
+          <Link href="/surfaces" style={{ color:'var(--atlas-accent)', fontSize:11,
+            textDecoration:'none', padding:'4px 10px',
+            border:'1px solid var(--atlas-border)', borderRadius:3 }}>
+            Surfaces
+          </Link>
+          <Link href="/brief" style={{ color:'var(--atlas-accent)', fontSize:11,
+            textDecoration:'none', padding:'4px 10px',
+            border:'1px solid var(--atlas-border)', borderRadius:3 }}>
+            Brief
+          </Link>
         </div>
 
 
