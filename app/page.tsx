@@ -62,7 +62,7 @@ export default function Home() {
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(130px,1fr))', gap:8 }}>
           <StatusCard label="Parliament" value={parliament?.verdict||'--'} colorClass={verdictClass} size="lg"/>
           <StatusCard label="Score" value={fmt2(parliament?.score)}/>
-          {Object.entries(parliament?.brain_weights||{}).map(([b,w]) => (
+          {Object.entries(parliament?.brain_weights||{}).map(([b,w]: [string, number]) => (
             <StatusCard key={b} label={b.replace('_',' ').toUpperCase()} value={`${(Number(w)*100).toFixed(0)}%`}/>
           ))}
         </div>
@@ -88,7 +88,7 @@ export default function Home() {
                 </tr>
               </thead>
               <tbody>
-                {portfolio.positions.map((p,i) => (
+                {portfolio.positions.map((p: any, i: number) => (
                   <tr key={i} style={{ borderBottom:'1px solid var(--atlas-border)' }}>
                     <td style={{ padding:'4px 8px', color:'var(--atlas-accent)' }}>{p.symbol}</td>
                     <td style={{ padding:'4px 8px' }} className="atlas-label">{p.region||'--'}</td>

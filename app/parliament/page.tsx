@@ -108,7 +108,7 @@ export default function ParliamentPage() {
         <div style={{ display:'grid',
                       gridTemplateColumns:'repeat(auto-fill, minmax(160px,1fr))',
                       gap:8 }}>
-          {Object.entries(parliament?.brain_weights || {}).map(([brain, weight]) => (
+          {Object.entries(parliament?.brain_weights || {}).map(([brain, weight]: [string, unknown]) => (
             <BrainGauge
               key={brain}
               name={brain}
