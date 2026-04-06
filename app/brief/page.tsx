@@ -43,7 +43,7 @@ export default function BriefPage() {
 
         <div className="atlas-card" style={{ fontFamily:'monospace' }}>
           {lines.length > 0 ? (
-            lines.map((line, i) => (
+            lines.map((line: string, i: number) => (
               <div key={i} style={{
                 color: getLineColor(line),
                 fontSize: line.startsWith('ATLAS') ? 14 : 12,
