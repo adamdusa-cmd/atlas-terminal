@@ -1,4 +1,4 @@
-const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const BASE = process.env.NEXT_PUBLIC_API_URL || 'https://atlas-scheduler-production-a62e.up.railway.app'
 
 async function fetchJSON<T>(endpoint: string): Promise<T | null> {
   try {
@@ -20,4 +20,4 @@ export const api = {
   status:     () => fetchJSON('/api/status'),
 }
 
-export const WS_URL = (process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000') + '/ws/live'
+export const WS_URL = 'wss://atlas-scheduler-production-a62e.up.railway.app/ws/live'
