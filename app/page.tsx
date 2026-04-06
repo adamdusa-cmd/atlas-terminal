@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 import { useATLAS } from '@/app/hooks/useATLAS'
 import TopBar from '@/app/components/TopBar'
 import StatusCard from '@/app/components/StatusCard'
@@ -18,6 +19,20 @@ export default function Home() {
     <div style={{ minHeight:'100vh' }}>
       <TopBar status={status} connected={connected} lastUpdate={lastUpdate} />
       <div style={{ padding:16, display:'flex', flexDirection:'column', gap:12 }}>
+        {/* Navigation */}
+        <div style={{ display:'flex', gap:8, marginBottom:4 }}>
+          <Link href="/signals" style={{ color:'var(--atlas-accent)', fontSize:11,
+            textDecoration:'none', padding:'4px 10px',
+            border:'1px solid var(--atlas-border)', borderRadius:3 }}>
+            Signals
+          </Link>
+          <Link href="/parliament" style={{ color:'var(--atlas-accent)', fontSize:11,
+            textDecoration:'none', padding:'4px 10px',
+            border:'1px solid var(--atlas-border)', borderRadius:3 }}>
+            Parliament
+          </Link>
+        </div>
+
 
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(130px,1fr))', gap:8 }}>
           <StatusCard label="Risk Level" value={risk?.risk_level||'--'} colorClass={`risk-${risk?.risk_level||'LOW'}`} size="lg"/>
