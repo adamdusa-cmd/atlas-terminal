@@ -18,6 +18,11 @@ export const api = {
   macro:      () => fetchJSON('/api/macro'),
   universe:   () => fetchJSON('/api/universe'),
   status:     () => fetchJSON('/api/status'),
+  tradeHistory:  () => fetchJSON('/api/history/trades'),
+  signalHistory: () => fetchJSON('/api/history/signals'),
+  riskHistory:   () => fetchJSON('/api/history/risk'),
+  alertHistory:  () => fetchJSON('/api/history/alerts'),
+  briefHistory:  () => fetchJSON('/api/history/briefs'),
 }
 
 export const WS_URL = 'wss://atlas-scheduler-production-a62e.up.railway.app/ws/live'

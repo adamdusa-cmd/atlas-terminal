@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useATLAS } from '@/app/hooks/useATLAS'
 import TopBar from '@/app/components/TopBar'
 import StatusCard from '@/app/components/StatusCard'
+import IBStatus from '@/app/components/IBStatus'
 
 export default function Home() {
   const { data, connected, lastUpdate } = useATLAS()
@@ -45,6 +46,21 @@ export default function Home() {
             textDecoration:'none', padding:'4px 10px',
             border:'1px solid var(--atlas-border)', borderRadius:3 }}>
             Universe
+          </Link>
+          <Link href="/trades" style={{ color:'var(--atlas-accent)', fontSize:11,
+            textDecoration:'none', padding:'4px 10px',
+            border:'1px solid var(--atlas-border)', borderRadius:3 }}>
+            Trades
+          </Link>
+          <Link href="/history" style={{ color:'var(--atlas-accent)', fontSize:11,
+            textDecoration:'none', padding:'4px 10px',
+            border:'1px solid var(--atlas-border)', borderRadius:3 }}>
+            History
+          </Link>
+          <Link href="/briefs" style={{ color:'var(--atlas-accent)', fontSize:11,
+            textDecoration:'none', padding:'4px 10px',
+            border:'1px solid var(--atlas-border)', borderRadius:3 }}>
+            Briefs
           </Link>
         </div>
 
