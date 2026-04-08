@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import AppShell from './components/AppShell'
 
 export const metadata: Metadata = {
   title: 'ATLAS Terminal',
@@ -9,8 +10,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body style={{ minHeight: '100vh', background: 'var(--atlas-bg)' }}>
-        {children}
+      <body>
+        <AppShell>
+          {children}
+        </AppShell>
       </body>
     </html>
   )

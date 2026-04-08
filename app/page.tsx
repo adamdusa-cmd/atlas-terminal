@@ -1,9 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useATLAS } from '@/app/hooks/useATLAS'
-import TopBar from '@/app/components/TopBar'
 import StatusCard from '@/app/components/StatusCard'
-import IBStatus from '@/app/components/IBStatus'
 
 export default function Home() {
   const { data, connected, lastUpdate } = useATLAS()
