@@ -23,6 +23,7 @@ export const api = {
   riskHistory:   () => fetchJSON('/api/history/risk'),
   alertHistory:  () => fetchJSON('/api/history/alerts'),
   briefHistory:  () => fetchJSON('/api/history/briefs'),
+  chat: (message: string, history: any[]) => fetchJSON('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message, history }) }),
 }
 
 export const WS_URL = 'wss://atlas-scheduler-production-a62e.up.railway.app/ws/live'

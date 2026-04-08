@@ -62,6 +62,12 @@ export default function Home() {
             border:'1px solid var(--atlas-border)', borderRadius:3 }}>
             Briefs
           </Link>
+          <Link href="/chat" style={{ color:'#fff', fontSize:11,
+            textDecoration:'none', padding:'4px 10px',
+            background:'var(--atlas-accent)',
+            border:'1px solid var(--atlas-accent)', borderRadius:3, fontWeight:600 }}>
+            Chief of Staff
+          </Link>
         </div>
 
 
