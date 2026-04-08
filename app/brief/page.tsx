@@ -1,6 +1,5 @@
 'use client'
 import { useATLAS } from '@/app/hooks/useATLAS'
-import TopBar from '@/app/components/TopBar'
 import Link from 'next/link'
 
 export default function BriefPage() {
@@ -25,7 +24,6 @@ export default function BriefPage() {
 
   return (
     <div style={{ minHeight:'100vh' }}>
-      <TopBar status={status} connected={connected} lastUpdate={lastUpdate} />
       <div style={{ padding:16 }}>
         <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:12 }}>
           <Link href="/" style={{ color:'var(--atlas-muted)', fontSize:11, textDecoration:'none' }}>

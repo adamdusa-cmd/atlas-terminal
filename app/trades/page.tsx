@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { api } from '@/app/lib/api'
-import TopBar from '@/app/components/TopBar'
 import Link from 'next/link'
 import { useATLAS } from '@/app/hooks/useATLAS'
 
@@ -28,7 +27,6 @@ export default function TradesPage() {
 
   return (
     <div style={{ minHeight:'100vh' }}>
-      <TopBar status={data.status} connected={connected} lastUpdate={lastUpdate} />
       <div style={{ padding:16 }}>
         <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:12 }}>
           <Link href="/" style={{ color:'var(--atlas-muted)', fontSize:11, textDecoration:'none' }}>← Dashboard</Link>

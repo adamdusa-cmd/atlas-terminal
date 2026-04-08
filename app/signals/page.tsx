@@ -1,6 +1,5 @@
 'use client'
 import { useATLAS } from '@/app/hooks/useATLAS'
-import TopBar from '@/app/components/TopBar'
 import Link from 'next/link'
 
 function SignalBar({ name, value }: { name: string; value: number }) {
@@ -72,7 +71,6 @@ export default function SignalsPage() {
 
   return (
     <div style={{ minHeight:'100vh' }}>
-      <TopBar status={status} connected={connected} lastUpdate={lastUpdate} />
 
       <div style={{ padding:16 }}>
         <div style={{ display:'flex', alignItems:'center',

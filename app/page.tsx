@@ -16,7 +16,6 @@ export default function Home() {
 
   return (
     <div style={{ minHeight:'100vh' }}>
-      <TopBar status={status} connected={connected} lastUpdate={lastUpdate} />
       <div style={{ padding:16, display:'flex', flexDirection:'column', gap:12 }}>
         {/* Navigation */}
         <div style={{ display:'flex', gap:8, marginBottom:4 }}>

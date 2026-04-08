@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import TopBar from '@/app/components/TopBar'
 import Link from 'next/link'
 import { useATLAS } from '@/app/hooks/useATLAS'
 
@@ -102,7 +101,6 @@ export default function ChatPage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <TopBar status={data.status} connected={connected} lastUpdate={lastUpdate} />
 
       <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--atlas-border)', display: 'flex', alignItems: 'center', gap: 16 }}>
         <Link href="/" style={{ color: 'var(--atlas-muted)', fontSize: 11, textDecoration: 'none' }}>← Dashboard</Link>
