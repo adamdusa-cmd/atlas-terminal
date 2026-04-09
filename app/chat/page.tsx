@@ -9,7 +9,7 @@ interface Message {
   timestamp: string
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const API_URL = 'https://atlas-scheduler-production-a62e.up.railway.app'
 
 export default function ChatPage() {
   const { data, connected, lastUpdate } = useATLAS()

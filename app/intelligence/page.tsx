@@ -10,7 +10,7 @@ interface Message {
   action_data?: any
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const API_URL = 'https://atlas-scheduler-production-a62e.up.railway.app'
 
 const ALL_SUGGESTIONS = [
   "What are you doing right now?",
