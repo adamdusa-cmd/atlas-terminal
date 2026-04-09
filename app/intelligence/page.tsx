@@ -10,7 +10,7 @@ interface Message {
   action_data?: any
 }
 
-const API_URL = 'https://atlas-scheduler-production-a62e.up.railway.app'
+const API_URL = ''
 
 const ALL_SUGGESTIONS = [
   "What are you doing right now?",

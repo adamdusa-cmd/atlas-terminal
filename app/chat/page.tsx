@@ -9,7 +9,7 @@ interface Message {
   timestamp: string
 }
 
-const API_URL = 'https://atlas-scheduler-production-a62e.up.railway.app'
+const API_URL = ''
 
 export default function ChatPage() {
   const { data, connected, lastUpdate } = useATLAS()
