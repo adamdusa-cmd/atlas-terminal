@@ -7,7 +7,7 @@ import ParticleBackground from '@/app/components/ParticleBackground'
 
 const NAV = [
   {
-    section: 'ATLAS TERMINAL',
+    section: 'ATLAS EQUITIES',
     key: 'terminal',
     items: [
       { label: 'Dashboard',      href: '/dashboard'  },

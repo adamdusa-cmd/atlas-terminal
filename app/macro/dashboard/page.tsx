@@ -38,7 +38,7 @@ export default function MacroDashboard() {
           boxShadow: status ? '0 0 6px rgba(34,197,94,0.5)' : 'none'
         }}/>
         <span style={{ fontSize:13, fontWeight:600, color:'#f8f9fa' }}>ATLAS MACRO</span>
-        <span className="atlas-chip">FX · INDICES · ETFs</span>
+        <span className="atlas-chip">FX · INDICES · ETFs · CRYPTO</span>
         <span style={{ marginLeft:'auto', fontSize:10, color:'#adb5bd' }}>
           {universe?.total || 0} instruments
         </span>
@@ -81,11 +81,12 @@ export default function MacroDashboard() {
       {/* Universe breakdown */}
       <div className="atlas-card">
         <div className="atlas-label" style={{ marginBottom:8 }}>Active Universe</div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8 }}>
           {[
             { label:'FX Pairs', count: universe?.instruments?.filter((i:any) => i.asset_class==='FX').length ?? 0, color:'#4dabf7' },
             { label:'Indices', count: universe?.instruments?.filter((i:any) => i.asset_class==='INDEX').length ?? 0, color:'#f59e0b' },
             { label:'ETFs', count: universe?.instruments?.filter((i:any) => i.asset_class==='ETF').length ?? 0, color:'#22c55e' },
+            { label:'Crypto', count: universe?.instruments?.filter((i:any) => i.asset_class==='CRYPTO').length ?? 0, color:'#a78bfa' },
           ].map(item => (
             <div key={item.label} style={{ textAlign:'center' }}>
               <div style={{ fontSize:24, fontWeight:700, color:item.color }}>{item.count}</div>

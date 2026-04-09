@@ -14,7 +14,7 @@ export default function MacroUniverse() {
   }, [])
 
   const filtered = filter === 'ALL' ? instruments : instruments.filter(i => i.asset_class === filter)
-  const assetColor = (cls: string) => cls === 'FX' ? '#4dabf7' : cls === 'INDEX' ? '#f59e0b' : '#22c55e'
+  const assetColor = (cls: string) => cls === 'FX' ? '#4dabf7' : cls === 'INDEX' ? '#f59e0b' : cls === 'CRYPTO' ? '#a78bfa' : '#22c55e'
 
   return (
     <div style={{ padding:16, fontFamily:'Inter, sans-serif' }}>
@@ -22,7 +22,7 @@ export default function MacroUniverse() {
         <span style={{ fontSize:13, fontWeight:600, color:'#f8f9fa' }}>Macro Universe</span>
         <span className="atlas-label">{instruments.length} instruments</span>
         <div style={{ marginLeft:'auto', display:'flex', gap:8 }}>
-          {['ALL','FX','INDEX','ETF'].map(f => (
+          {['ALL','FX','INDEX','ETF','CRYPTO'].map(f => (
             <button key={f} onClick={() => setFilter(f)} style={{
               padding:'3px 10px', fontSize:10, cursor:'pointer',
               background: filter===f ? '#228be6' : 'var(--atlas-surface)',
