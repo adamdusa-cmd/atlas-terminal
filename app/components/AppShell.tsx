@@ -31,13 +31,20 @@ const NAV = [
       { label: 'Market',   href: '/market',   external: true },
     ]
   },
+  {
+    section: 'INTELLIGENCE',
+    key: 'intelligence',
+    items: [
+      { label: 'ATLAS', href: '/intelligence' },
+    ]
+  },
 ]
 
 const LANDING_PATHS = ['/landing', '/']
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
-  const [expanded, setExpanded] = useState<Record<string,boolean>>({ terminal: false, analytics: false })
+  const [expanded, setExpanded] = useState<Record<string,boolean>>({ terminal: false, analytics: false, intelligence: false })
   const pathname = usePathname()
   const { data, connected } = useATLAS()
   const drawerRef = useRef<HTMLDivElement>(null)
