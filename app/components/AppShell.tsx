@@ -64,7 +64,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const G = data?.risk?.G ?? 0
   const riskColor = G > 0.85 ? '#ef4444' : G > 0.6 ? '#f59e0b' : '#22c55e'
 
-  if (isLanding) return <>{children}</>
+  // Landing page still shows navbar with hamburger
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
