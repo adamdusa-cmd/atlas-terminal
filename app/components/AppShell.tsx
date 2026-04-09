@@ -8,24 +8,24 @@ const NAV = [
   {
     section: 'ATLAS TERMINAL',
     items: [
-      { label: 'Dashboard',      href: '/',          icon: '◈' },
-      { label: 'Signals',        href: '/signals',   icon: '▲' },
-      { label: 'Parliament',     href: '/parliament',icon: '⬡' },
-      { label: 'Surfaces',       href: '/surfaces',  icon: '◉' },
-      { label: 'Universe',       href: '/universe',  icon: '◎' },
-      { label: 'Trades',         href: '/trades',    icon: '◆' },
-      { label: 'History',        href: '/history',   icon: '▸' },
-      { label: 'Brief',          href: '/brief',     icon: '◇' },
-      { label: 'Briefs',         href: '/briefs',    icon: '≡' },
-      { label: 'Chief of Staff', href: '/chat',      icon: '✦' },
+      { label: 'Dashboard',      href: '/',           icon: '◈' },
+      { label: 'Signals',        href: '/signals',    icon: '▲' },
+      { label: 'Parliament',     href: '/parliament', icon: '⬡' },
+      { label: 'Surfaces',       href: '/surfaces',   icon: '◉' },
+      { label: 'Universe',       href: '/universe',   icon: '◎' },
+      { label: 'Trades',         href: '/trades',     icon: '◆' },
+      { label: 'History',        href: '/history',    icon: '▸' },
+      { label: 'Brief',          href: '/brief',      icon: '◇' },
+      { label: 'Briefs',         href: '/briefs',     icon: '≡' },
+      { label: 'Chief of Staff', href: '/chat',       icon: '✦' },
     ]
   },
   {
     section: 'ANALYTICS',
     items: [
-      { label: 'Compare',        href: '/compare',   icon: '⇄', external: true },
-      { label: 'Research',       href: '/research',  icon: '◐', external: true },
-      { label: 'Market',         href: '/market',    icon: '⊞', external: true },
+      { label: 'Compare',  href: '/compare',  icon: '⇄', external: true },
+      { label: 'Research', href: '/research', icon: '◐', external: true },
+      { label: 'Market',   href: '/market',   icon: '⊞', external: true },
     ]
   },
 ]
@@ -36,7 +36,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const { data, connected } = useATLAS()
   const drawerRef = useRef<HTMLDivElement>(null)
 
-  // Close on outside click
+  const isLanding = pathname === '/landing'
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (drawerRef.current && !drawerRef.current.contains(e.target as Node)) {
@@ -47,7 +48,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
-  // Close on route change
   useEffect(() => { setOpen(false) }, [pathname])
 
   const isActive = (href: string) => {
@@ -56,34 +56,42 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const G = data?.risk?.G ?? 0
-  const riskColor = G > 0.85 ? 'var(--atlas-red)'
-    : G > 0.6 ? 'var(--atlas-amber)'
-    : 'var(--atlas-green)'
+  const riskColor = G > 0.85 ? '#ef4444' : G > 0.6 ? '#f59e0b' : '#22c55e'
+
+  if (isLanding) return <>{children}</>
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
 
-      {/* Top bar */}
-      <div style={{
-        height: 48,
-        background: 'var(--atlas-bg)',
-        borderBottom: '1px solid var(--atlas-border)',
-        display: 'flex', alignItems: 'center',
-        padding: '0 16px', gap: 12,
+      {/* Navbar — matches presentation site */}
+      <nav style={{
         position: 'sticky', top: 0, zIndex: 100,
+        background: 'rgba(10, 19, 36, 0.85)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+        height: 64,
+        display: 'flex', alignItems: 'center',
+        padding: '0 20px', gap: 16,
       }}>
+
         {/* Hamburger */}
         <button onClick={() => setOpen(o => !o)} style={{
-          background: 'none', border: 'none', cursor: 'pointer',
-          padding: '4px 6px', display: 'flex', flexDirection: 'column',
-          gap: 4, borderRadius: 4,
-        }}>
+          background: 'none', border: '1px solid rgba(255,255,255,0.1)',
+          cursor: 'pointer', padding: '7px 8px',
+          borderRadius: 4, display: 'flex',
+          flexDirection: 'column', gap: 4,
+          transition: 'border-color 0.2s',
+        }}
+          onMouseEnter={e => (e.currentTarget.style.borderColor = '#228be6')}
+          onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
+        >
           {[0,1,2].map(i => (
             <div key={i} style={{
-              width: 18, height: 2,
-              background: open ? 'var(--atlas-accent)' : 'var(--atlas-text)',
+              width: 16, height: 1.5,
+              background: open ? '#4dabf7' : '#adb5bd',
               borderRadius: 1,
-              transition: 'all 0.2s',
+              transition: 'all 0.25s ease',
               transform: open
                 ? i === 0 ? 'rotate(45deg) translate(4px, 4px)'
                 : i === 2 ? 'rotate(-45deg) translate(4px, -4px)'
@@ -93,110 +101,163 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           ))}
         </button>
 
-        {/* Logo */}
-        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--atlas-accent)' }}>ATLAS</span>
-          <span style={{ fontSize: 10, color: 'var(--atlas-muted)', letterSpacing: '0.06em' }}>
-            {pathname === '/' ? 'TERMINAL'
-              : pathname.startsWith('/compare') ? 'COMPARE'
-              : pathname.startsWith('/research') ? 'RESEARCH'
-              : pathname.startsWith('/market') ? 'MARKET'
-              : pathname.startsWith('/chat') ? 'CHIEF OF STAFF'
-              : pathname.replace('/', '').toUpperCase()}
+        {/* Brand — matches presentation site exactly */}
+        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+          <span style={{
+            fontSize: 18, fontWeight: 700,
+            letterSpacing: '0.1em',
+            color: '#f8f9fa',
+            fontFamily: 'Inter, sans-serif',
+          }}>
+            ATLAS<span style={{ color: '#228be6' }}>.</span>
           </span>
         </Link>
 
-        {/* Right side status */}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 11, color: 'var(--atlas-muted)' }}>
+        {/* Current section label */}
+        <span style={{
+          fontSize: 10, fontWeight: 500,
+          letterSpacing: '0.1em',
+          color: '#adb5bd',
+          textTransform: 'uppercase',
+          borderLeft: '1px solid rgba(255,255,255,0.1)',
+          paddingLeft: 12, marginLeft: 4,
+        }}>
+          {pathname === '/' ? 'Dashboard'
+            : pathname.startsWith('/compare') ? 'Compare'
+            : pathname.startsWith('/research') ? 'Research'
+            : pathname.startsWith('/market') ? 'Market'
+            : pathname.startsWith('/chat') ? 'Chief of Staff'
+            : pathname.replace('/', '').replace('-', ' ').toUpperCase()}
+        </span>
+
+        {/* Right — live metrics */}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 20 }}>
+          <span style={{ fontSize: 11, color: '#adb5bd', fontFamily: 'Inter, sans-serif' }}>
             G: <span style={{ color: riskColor, fontWeight: 600 }}>{G.toFixed(3)}</span>
           </span>
-          <span style={{ fontSize: 11, color: 'var(--atlas-muted)' }}>
-            <span style={{ color: 'var(--atlas-accent)', fontWeight: 600 }}>{data?.parliament?.verdict ?? '--'}</span>
+          <span style={{ fontSize: 11, color: '#adb5bd' }}>
+            <span style={{ color: '#4dabf7', fontWeight: 600 }}>{data?.parliament?.verdict ?? '--'}</span>
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <div style={{
               width: 6, height: 6, borderRadius: '50%',
-              background: connected ? 'var(--atlas-green)' : 'var(--atlas-red)',
+              background: connected ? '#22c55e' : '#ef4444',
+              boxShadow: connected ? '0 0 6px rgba(34,197,94,0.6)' : 'none',
             }} />
-            <span style={{ fontSize: 10, color: 'var(--atlas-muted)' }}>{connected ? 'LIVE' : 'OFF'}</span>
+            <span style={{ fontSize: 10, color: '#adb5bd', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              {connected ? 'Live' : 'Off'}
+            </span>
           </div>
         </div>
-      </div>
+      </nav>
 
       {/* Overlay */}
       {open && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
-          zIndex: 199, transition: 'opacity 0.2s',
+        <div onClick={() => setOpen(false)} style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(5, 11, 20, 0.7)',
+          backdropFilter: 'blur(2px)',
+          zIndex: 199,
         }} />
       )}
 
       {/* Drawer */}
       <div ref={drawerRef} style={{
         position: 'fixed', top: 0, left: 0, bottom: 0,
-        width: 240,
-        background: 'var(--atlas-bg)',
-        borderRight: '1px solid var(--atlas-border)',
+        width: 260,
+        background: 'rgba(10, 19, 36, 0.97)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderRight: '1px solid rgba(255,255,255,0.1)',
         zIndex: 200,
         transform: open ? 'translateX(0)' : 'translateX(-100%)',
-        transition: 'transform 0.25s cubic-bezier(0.4,0,0.2,1)',
+        transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1)',
         display: 'flex', flexDirection: 'column',
         overflowY: 'auto',
       }}>
+
         {/* Drawer header */}
         <div style={{
-          height: 48, display: 'flex', alignItems: 'center',
-          padding: '0 16px', borderBottom: '1px solid var(--atlas-border)',
-          gap: 8,
+          height: 64, display: 'flex', alignItems: 'center',
+          padding: '0 20px',
+          borderBottom: '1px solid rgba(255,255,255,0.1)',
         }}>
-          <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--atlas-accent)' }}>ATLAS</span>
-          <span style={{ fontSize: 10, color: 'var(--atlas-muted)', letterSpacing: '0.06em' }}>NAVIGATION</span>
+          <span style={{
+            fontSize: 18, fontWeight: 700,
+            letterSpacing: '0.1em', color: '#f8f9fa',
+            fontFamily: 'Inter, sans-serif',
+          }}>
+            ATLAS<span style={{ color: '#228be6' }}>.</span>
+          </span>
         </div>
 
         {/* Nav sections */}
-        <div style={{ padding: '8px 0', flex: 1 }}>
+        <div style={{ padding: '12px 0', flex: 1 }}>
           {NAV.map(section => (
-            <div key={section.section} style={{ marginBottom: 8 }}>
+            <div key={section.section} style={{ marginBottom: 4 }}>
               <div style={{
-                padding: '8px 16px 4px',
-                fontSize: 9, fontWeight: 700, letterSpacing: '0.12em',
-                color: 'var(--atlas-muted)',
+                padding: '10px 20px 6px',
+                fontSize: 9, fontWeight: 600,
+                letterSpacing: '0.12em',
+                color: '#adb5bd',
+                textTransform: 'uppercase',
+                fontFamily: 'Inter, sans-serif',
               }}>{section.section}</div>
               {section.items.map(item => (
                 <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
                   <div style={{
-                    padding: '8px 16px',
+                    padding: '9px 20px',
                     display: 'flex', alignItems: 'center', gap: 10,
-                    background: isActive(item.href) ? 'rgba(99,102,241,0.12)' : 'transparent',
-                    borderLeft: isActive(item.href) ? '2px solid var(--atlas-accent)' : '2px solid transparent',
+                    background: isActive(item.href) ? 'rgba(34,139,230,0.1)' : 'transparent',
+                    borderLeft: isActive(item.href) ? '2px solid #228be6' : '2px solid transparent',
                     cursor: 'pointer',
-                    transition: 'all 0.15s',
-                  }}>
-                    <span style={{ fontSize: 12, color: isActive(item.href) ? 'var(--atlas-accent)' : 'var(--atlas-muted)', width: 16 }}>{item.icon}</span>
+                    transition: 'all 0.15s ease',
+                  }}
+                    onMouseEnter={e => {
+                      if (!isActive(item.href)) {
+                        (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!isActive(item.href)) {
+                        (e.currentTarget as HTMLElement).style.background = 'transparent'
+                      }
+                    }}
+                  >
                     <span style={{
-                      fontSize: 12, fontWeight: isActive(item.href) ? 600 : 400,
-                      color: isActive(item.href) ? 'var(--atlas-text)' : 'var(--atlas-muted)',
+                      fontSize: 11,
+                      color: isActive(item.href) ? '#4dabf7' : '#adb5bd',
+                      width: 16, textAlign: 'center',
+                    }}>{item.icon}</span>
+                    <span style={{
+                      fontSize: 12,
+                      fontWeight: isActive(item.href) ? 500 : 400,
+                      color: isActive(item.href) ? '#f8f9fa' : '#adb5bd',
+                      fontFamily: 'Inter, sans-serif',
+                      letterSpacing: '0.02em',
                     }}>{item.label}</span>
                     {(item as any).external && (
-                      <span style={{ marginLeft: 'auto', fontSize: 9, color: 'var(--atlas-muted)' }}>↗</span>
+                      <span style={{ marginLeft: 'auto', fontSize: 9, color: '#adb5bd' }}>↗</span>
                     )}
                   </div>
                 </Link>
               ))}
-              <div style={{ height: 1, background: 'var(--atlas-border)', margin: '4px 16px' }} />
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '6px 20px' }} />
             </div>
           ))}
         </div>
 
         {/* Drawer footer */}
         <div style={{
-          padding: '12px 16px',
-          borderTop: '1px solid var(--atlas-border)',
-          fontSize: 10, color: 'var(--atlas-muted)',
+          padding: '16px 20px',
+          borderTop: '1px solid rgba(255,255,255,0.1)',
         }}>
-          <div>Mode: <span style={{ color: 'var(--atlas-amber)' }}>PAPER</span></div>
-          <div>April 13 — IB goes live</div>
+          <div style={{ fontSize: 10, color: '#adb5bd', fontFamily: 'Inter, sans-serif', marginBottom: 4 }}>
+            Mode: <span style={{ color: '#f59e0b', fontWeight: 500 }}>PAPER</span>
+          </div>
+          <div style={{ fontSize: 10, color: 'rgba(173,181,189,0.5)' }}>
+            April 13 — IB goes live
+          </div>
         </div>
       </div>
 
