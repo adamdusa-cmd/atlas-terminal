@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import ParticleBackground from '@/app/components/ParticleBackground'
+import LandingFooter from '@/app/components/LandingFooter'
 
 export default function LandingPage() {
   const [mounted, setMounted] = useState(false)
@@ -24,6 +25,7 @@ export default function LandingPage() {
           ))}
         </div>
       </div>
+      <LandingFooter />
     </div>
   )
 }
