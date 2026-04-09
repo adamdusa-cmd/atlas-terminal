@@ -188,13 +188,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           padding: '0 20px',
           borderBottom: '1px solid rgba(255,255,255,0.1)',
         }}>
-          <span style={{
-            fontSize: 18, fontWeight: 700,
-            letterSpacing: '0.1em', color: '#f8f9fa',
-            fontFamily: 'Inter, sans-serif',
-          }}>
-            ATLAS<span style={{ color: '#228be6' }}>.</span>
-          </span>
+          <Link href="/landing" style={{ textDecoration: 'none' }}>
+            <span style={{
+              fontSize: 18, fontWeight: 700,
+              letterSpacing: '0.1em', color: '#f8f9fa',
+              fontFamily: 'Inter, sans-serif',
+            }}>
+              ATLAS<span style={{ color: '#228be6' }}>.</span>
+            </span>
+          </Link>
         </div>
 
         {/* Nav sections */}
