@@ -34,7 +34,7 @@ const ALL_SUGGESTIONS = [
   "What is your entropy reading?",
   "How are your regional teams performing?",
 ]
-const BASE_SUGGESTIONS = ALL_SUGGESTIONS.slice(0, 4)
+const BASE_SUGGESTIONS = ALL_SUGGESTIONS.slice(0, 6)
 
 export default function IntelligencePage() {
   const { data, connected } = useATLAS()
