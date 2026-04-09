@@ -37,6 +37,20 @@ const NAV = [
     ]
   },
   {
+    section: 'ATLAS COMMODITIES',
+    key: 'commodities',
+    items: [
+      { label: 'Dashboard',      href: '/commodities/dashboard'  },
+      { label: 'Signals',        href: '/commodities/signals'    },
+      { label: 'Parliament',     href: '/commodities/parliament' },
+      { label: 'Surfaces',       href: '/commodities/surfaces'   },
+      { label: 'Universe',       href: '/commodities/universe'   },
+      { label: 'Trades',         href: '/commodities/trades'     },
+      { label: 'History',        href: '/commodities/history'    },
+      { label: 'Chief of Staff', href: '/commodities/chat'       },
+    ]
+  },
+  {
     section: 'ANALYTICS',
     key: 'analytics',
     items: [
@@ -58,7 +72,7 @@ const LANDING_PATHS = ['/landing', '/']
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
-  const [expanded, setExpanded] = useState<Record<string,boolean>>({ terminal: false, analytics: false, intelligence: false, macro: false })
+  const [expanded, setExpanded] = useState<Record<string,boolean>>({ terminal: false, analytics: false, intelligence: false, macro: false, commodities: false })
   const pathname = usePathname()
   const { data, connected } = useATLAS()
   const drawerRef = useRef<HTMLDivElement>(null)
