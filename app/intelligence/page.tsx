@@ -28,6 +28,8 @@ export default function IntelligencePage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set())
+  const activeSuggestions = SUGGESTIONS.filter(s => !dismissed.has(s))
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -48,6 +50,7 @@ export default function IntelligencePage() {
   const send = async (msg?: string) => {
     const text = (msg || input).trim()
     if (!text || loading) return
+    if (msg) setDismissed(prev => new Set([...prev, msg]))
 
     const userMsg: Message = { role: 'user', content: text, timestamp: new Date().toISOString() }
     const newMessages = [...messages, userMsg]
@@ -226,9 +229,9 @@ export default function IntelligencePage() {
       </div>
 
       {/* Suggestions */}
-      {messages.length <= 1 && (
+      {activeSuggestions.length > 0 && (
         <div style={{ padding: '0 20px 12px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {SUGGESTIONS.map((s, i) => (
+          {activeSuggestions.map((s, i) => (
             <button key={i} onClick={() => send(s)} style={{
               padding: '5px 12px', fontSize: 11, cursor: 'pointer',
               background: 'rgba(10,19,36,0.7)', color: '#adb5bd',
