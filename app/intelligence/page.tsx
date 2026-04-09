@@ -12,7 +12,7 @@ interface Message {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
-const SUGGESTIONS = [
+const ALL_SUGGESTIONS = [
   "What are you doing right now?",
   "Run a valuation on Hermès",
   "Analyse current market conditions",
@@ -21,15 +21,29 @@ const SUGGESTIONS = [
   "Analyse LVMH for me",
   "What does your morning brief say?",
   "Compare your Parliament verdict with current signals",
+  "What is your VPIN reading?",
+  "Show me your trade history",
+  "Analyse the luxury sector",
+  "What signals are active right now?",
+  "Run a valuation on LVMH",
+  "What is the G value telling you?",
+  "Analyse market conditions in Europe",
+  "What would trigger your circuit breaker?",
+  "Show me Parliament brain weights",
+  "Analyse Apple for me",
+  "What is your entropy reading?",
+  "How are your regional teams performing?",
 ]
+const BASE_SUGGESTIONS = ALL_SUGGESTIONS.slice(0, 4)
 
 export default function IntelligencePage() {
   const { data, connected } = useATLAS()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [dismissed, setDismissed] = useState<Set<string>>(new Set())
-  const activeSuggestions = SUGGESTIONS.filter(s => !dismissed.has(s))
+  const [shownSuggestions, setShownSuggestions] = useState<string[]>(BASE_SUGGESTIONS)
+  const nextSuggestionIndex = useRef(BASE_SUGGESTIONS.length)
+  const suggestionIndexRef = useRef(BASE_SUGGESTIONS.length)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -40,6 +54,8 @@ export default function IntelligencePage() {
     const G = data?.risk?.G ?? 0
     const verdict = data?.parliament?.verdict ?? '--'
     const risk = data?.risk?.level ?? '--'
+    setShownSuggestions(BASE_SUGGESTIONS)
+    suggestionIndexRef.current = BASE_SUGGESTIONS.length
     setMessages([{
       role: 'assistant',
       content: `I am ATLAS — Adaptive Trading & Learning Autonomous System.\n\nCurrent state: G at ${G.toFixed(3)}, Parliament verdict ${verdict}, risk level ${risk}. My 38 nodes are active across 6 global regions.\n\nAsk me anything — market analysis, valuations, system state, or trading intelligence.`,
@@ -50,7 +66,18 @@ export default function IntelligencePage() {
   const send = async (msg?: string) => {
     const text = (msg || input).trim()
     if (!text || loading) return
-    if (msg) setDismissed(prev => new Set([...prev, msg]))
+    if (msg) {
+      setShownSuggestions(prev => {
+        const next = prev.filter(s => s !== msg)
+        const remaining = ALL_SUGGESTIONS.filter(s => !prev.includes(s) && s !== msg)
+        if (remaining.length > 0) {
+          const nextOne = remaining[suggestionIndexRef.current % remaining.length]
+          suggestionIndexRef.current++
+          return [...next, nextOne]
+        }
+        return next
+      })
+    }
 
     const userMsg: Message = { role: 'user', content: text, timestamp: new Date().toISOString() }
     const newMessages = [...messages, userMsg]
@@ -229,9 +256,9 @@ export default function IntelligencePage() {
       </div>
 
       {/* Suggestions */}
-      {activeSuggestions.length > 0 && (
+      {shownSuggestions.length > 0 && (
         <div style={{ padding: '0 20px 12px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {activeSuggestions.map((s, i) => (
+          {shownSuggestions.map((s, i) => (
             <button key={i} onClick={() => send(s)} style={{
               padding: '5px 12px', fontSize: 11, cursor: 'pointer',
               background: 'rgba(10,19,36,0.7)', color: '#adb5bd',
