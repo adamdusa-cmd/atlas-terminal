@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import ParticleBackground from '@/app/components/ParticleBackground'
 
 export default function LandingPage() {
   const [mounted, setMounted] = useState(false)
@@ -7,6 +8,7 @@ export default function LandingPage() {
 
   return (
     <div style={{ minHeight:'100vh', background:'#050b14', fontFamily:'Inter, sans-serif', overflow:'hidden', position:'relative' }}>
+      <ParticleBackground />
       <div style={{ position:'absolute', inset:0, pointerEvents:'none', backgroundImage:`radial-gradient(1px 1px at 15% 25%, rgba(77,171,247,0.4) 0%, transparent 100%),radial-gradient(1px 1px at 75% 15%, rgba(77,171,247,0.3) 0%, transparent 100%),radial-gradient(1px 1px at 45% 55%, rgba(77,171,247,0.25) 0%, transparent 100%),radial-gradient(1px 1px at 85% 45%, rgba(77,171,247,0.3) 0%, transparent 100%),radial-gradient(1px 1px at 25% 75%, rgba(77,171,247,0.2) 0%, transparent 100%)` }} />
       <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-start', justifyContent:'center', minHeight:'100vh', padding:'0 10%', opacity:mounted?1:0, transform:mounted?'translateY(0)':'translateY(20px)', transition:'all 0.8s ease-out' }}>
         <span style={{ fontSize:11, fontWeight:600, letterSpacing:'0.15em', color:'#4dabf7', textTransform:'uppercase', display:'block', marginBottom:16 }}>Adaptive Trading & Learning Autonomous System</span>

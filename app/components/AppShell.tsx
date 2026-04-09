@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useATLAS } from '@/app/hooks/useATLAS'
+import ParticleBackground from '@/app/components/ParticleBackground'
 
 const NAV = [
   {
@@ -68,6 +69,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <ParticleBackground />
 
       {/* Navbar */}
       <nav style={{
