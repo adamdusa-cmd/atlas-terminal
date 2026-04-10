@@ -5,6 +5,20 @@ import Link from 'next/link'
 
 export default function DashboardPage() {
   const { data, connected, lastUpdate } = useATLAS()
+  const [scAlloc, setSCAlloc] = useState<any>(null)
+
+  useEffect(() => {
+    const fetchSC = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/supreme-commander`)
+        const d   = await res.json()
+        setSCAlloc(d.allocation)
+      } catch {}
+    }
+    fetchSC()
+    const iv = setInterval(fetchSC, 30000)
+    return () => clearInterval(iv)
+  }, [])
 
   const status = data?.status
   const risk = data?.risk
@@ -67,6 +81,30 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
+
+      {/* Supreme Commander */}
+      {scAlloc && (
+        <div className="atlas-card" style={{ marginBottom:8 }}>
+          <div className="atlas-label" style={{ marginBottom:8 }}>Supreme Commander — System Allocation</div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8 }}>
+            {[
+              { label:'ATLAS Equities',    value: scAlloc.equities,    color:'var(--atlas-accent-light)' },
+              { label:'ATLAS Macro',       value: scAlloc.macro,       color:'var(--atlas-amber)' },
+              { label:'ATLAS Commodities', value: scAlloc.commodities, color:'var(--atlas-green)' },
+            ].map(s => (
+              <div key={s.label} style={{ textAlign:'center' }}>
+                <div style={{ fontSize:22, fontWeight:700, color:s.color }}>
+                  {((s.value||0)*100).toFixed(0)}%
+                </div>
+                <div className="atlas-label">{s.label}</div>
+                <div style={{ height:3, background:'var(--atlas-bg3)', borderRadius:2, marginTop:4 }}>
+                  <div style={{ height:3, borderRadius:2, background:s.color, width:`${(s.value||0)*100}%`, transition:'width 0.5s' }}/>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Positions table */}
       {positions.length > 0 && (
