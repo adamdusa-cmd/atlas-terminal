@@ -247,24 +247,36 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div key={section.key} style={{ marginBottom: 4 }}>
 
               {/* Section header — clickable to expand/collapse */}
+              {(section as any).href && section.items.length === 0 ? (
+                <Link href={(section as any).href} style={{ textDecoration:'none' }}>
+                  <div onClick={() => {}} style={{
+                    padding:'10px 20px', display:'flex', alignItems:'center',
+                    background:'transparent', cursor:'pointer',
+                    transition:'background 0.15s',
+                  }}
+                    onMouseEnter={e => (e.currentTarget.style.background='rgba(255,255,255,0.04)')}
+                    onMouseLeave={e => (e.currentTarget.style.background='transparent')}
+                  >
+                    <span style={{ fontSize:9, fontWeight:700, letterSpacing:'0.12em',
+                      color:'#f8f9fa', textTransform:'uppercase', fontFamily:'Inter, sans-serif',
+                    }}>{section.section}</span>
+                  </div>
+                </Link>
+              ) : (
               <button onClick={() => toggleSection(section.key)} style={{
                 width: '100%', background: 'none', border: 'none',
                 cursor: 'pointer', padding: '10px 20px',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
-                <span style={{
-                  fontSize: 9, fontWeight: 600,
-                  letterSpacing: '0.12em', color: '#adb5bd',
-                  textTransform: 'uppercase',
-                  fontFamily: 'Inter, sans-serif',
+                <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.12em',
+                  color: '#adb5bd', textTransform: 'uppercase', fontFamily: 'Inter, sans-serif',
                 }}>{section.section}</span>
-                <span style={{
-                  fontSize: 10, color: '#adb5bd',
-                  transition: 'transform 0.2s',
+                <span style={{ fontSize: 10, color: '#adb5bd', transition: 'transform 0.2s',
                   transform: expanded[section.key] ? 'rotate(180deg)' : 'rotate(0deg)',
                   display: 'inline-block',
                 }}>▾</span>
               </button>
+              )}
 
               {/* Items — visible when expanded */}
               {expanded[section.key] && section.items.map(item => (
