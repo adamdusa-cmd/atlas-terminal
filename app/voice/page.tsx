@@ -47,7 +47,7 @@ export default function VoicePage() {
         const homeY = Math.random() * canvas.height
         // Nebula distribution — exponential falloff from center
         const angle = Math.random() * Math.PI * 2
-        const r     = Math.pow(Math.random(), 0.4) * 90   // exponential — dense core
+        const r     = Math.pow(Math.random(), 0.4) * 55   // exponential — dense core
         const tx    = cx + Math.cos(angle) * r
         const ty    = cy + Math.sin(angle) * r
         const dist  = r
