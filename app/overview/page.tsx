@@ -161,23 +161,23 @@ export default function OverviewPage() {
 
   useEffect(() => {
     const fetchAll = async () => {
-      // Fetch Supreme Commander
+      // Fetch Supreme Commander via proxy
       try {
-        const r = await fetch(`${SC_URL}/api/supreme-commander`)
+        const r = await fetch('/api/systems?system=equities&endpoint=supreme-commander')
         const d = await r.json()
         setSCAlloc(d.allocation)
       } catch {}
 
-      // Fetch each system
+      // Fetch each system via proxy
       const results: Record<string,any> = {}
       await Promise.all(SYSTEMS.map(async sys => {
         try {
           const [status, parliament, picks, portfolio, risk] = await Promise.all([
-            fetch(`${sys.url}/api/status`).then(r => r.json()),
-            fetch(`${sys.url}/api/parliament`).then(r => r.json()),
-            fetch(`${sys.url}/api/top-picks`).then(r => r.json()),
-            fetch(`${sys.url}/api/portfolio`).then(r => r.json()).catch(() => null),
-            fetch(`${sys.url}/api/risk`).then(r => r.json()).catch(() => null),
+            fetch(`/api/systems?system=${sys.key}&endpoint=status`).then(r => r.json()),
+            fetch(`/api/systems?system=${sys.key}&endpoint=parliament`).then(r => r.json()),
+            fetch(`/api/systems?system=${sys.key}&endpoint=top-picks`).then(r => r.json()),
+            fetch(`/api/systems?system=${sys.key}&endpoint=portfolio`).then(r => r.json()).catch(() => null),
+            fetch(`/api/systems?system=${sys.key}&endpoint=risk`).then(r => r.json()).catch(() => null),
           ])
           results[sys.key] = { status, parliament, picks: picks.picks || [], portfolio, risk }
         } catch {
@@ -202,7 +202,7 @@ export default function OverviewPage() {
       const histResults: Record<string,any[]> = {}
       await Promise.all(SYSTEMS.map(async sys => {
         try {
-          const r = await fetch(`${sys.url}/api/performance-history`)
+          const r = await fetch(`/api/systems?system=${sys.key}&endpoint=performance-history`)
           const d = await r.json()
           histResults[sys.key] = d.history || []
         } catch { histResults[sys.key] = [] }
