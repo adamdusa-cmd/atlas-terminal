@@ -1,164 +1,137 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
+import ParticleBackground from '@/app/components/ParticleBackground'
 
 interface Message { role: 'user' | 'assistant'; content: string }
-interface Particle {
-  x: number; y: number; targetX: number; targetY: number
-  homeX: number; homeY: number; vx: number; vy: number
-  size: number; opacity: number; angle: number; speed: number
-}
 
 export default function VoicePage() {
   const canvasRef    = useRef<HTMLCanvasElement>(null)
   const animRef      = useRef<number>(0)
-  const particlesRef = useRef<Particle[]>([])
-  const assembledRef = useRef(false)
   const speakingRef  = useRef(false)
   const listeningRef = useRef(false)
   const ampRef       = useRef(0)
-  const micAmpRef    = useRef(0)
 
   const [status,    setStatus]    = useState('INITIALISING')
   const [speaking,  setSpeaking]  = useState(false)
   const [listening, setListening] = useState(false)
   const [assembled, setAssembled] = useState(false)
+  const [started,   setStarted]   = useState(false)
   const [history,   setHistory]   = useState<Message[]>([])
   const [inputText, setInputText] = useState('')
   const [lastMsg,   setLastMsg]   = useState('')
-  const [started,   setStarted]   = useState(false)
 
+  // ── Ring Animation ──────────────────────────────────────────────
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')!
 
     const resize = () => {
-      canvas.width  = window.innerWidth
-      canvas.height = window.innerHeight
-      initParticles()
+      canvas.width  = canvas.offsetWidth
+      canvas.height = canvas.offsetHeight
     }
+    resize()
+    window.addEventListener('resize', resize)
 
-    const initParticles = () => {
-      const count = 600
-      const cx = canvas.width / 2
-      const cy = canvas.height / 2 - 64
-      particlesRef.current = Array.from({ length: count }, (_, i) => {
-        const homeX = Math.random() * canvas.width
-        const homeY = Math.random() * canvas.height
-        // Nebula distribution — exponential falloff from center
-        const angle = Math.random() * Math.PI * 2
-        const r     = Math.pow(Math.random(), 0.4) * 55   // exponential — dense core
-        const tx    = cx + Math.cos(angle) * r
-        const ty    = cy + Math.sin(angle) * r
-        const dist  = r
-        return {
-          x: homeX, y: homeY, homeX, homeY,
-          targetX: tx, targetY: ty,
-          vx: (Math.random()-0.5)*0.2, vy: (Math.random()-0.5)*0.2,
-          size: dist < 30
-            ? 1.5 + Math.random()*3.0
-            : dist < 80
-            ? 0.8 + Math.random()*1.8
-            : 0.3 + Math.random()*1.2,
-          opacity: dist < 30
-            ? 0.7 + Math.random()*0.3
-            : dist < 80
-            ? 0.3 + Math.random()*0.4
-            : 0.08 + Math.random()*0.25,
-          angle,
-          speed: 0.0005 + Math.random()*0.002,
-        }
-      })
-    }
+    const RING_PARTICLES = 80
+    const angles = Array.from({length: RING_PARTICLES}, (_, i) => ({
+      angle:  (i / RING_PARTICLES) * Math.PI * 2,
+      offset: Math.random() * 0.3,
+      speed:  0.008 + Math.random() * 0.006,
+      size:   1.2 + Math.random() * 1.8,
+    }))
 
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       const cx  = canvas.width / 2
-      const cy  = canvas.height / 2 - 64
+      const cy  = canvas.height / 2
       const t   = Date.now() / 1000
-      const asm = assembledRef.current
       const spk = speakingRef.current
       const lst = listeningRef.current
       const amp = ampRef.current
-      const mic = micAmpRef.current
 
-      particlesRef.current.forEach((p, i) => {
-        if (asm) {
-          const baseAngle = p.angle + p.speed * t * 60
-          const pulse = spk
-            ? Math.sin(t*10 + p.angle*3) * amp * 50
-            : lst ? Math.sin(t*6 + p.angle*2) * mic * 40
-            : Math.sin(t*1.5 + p.angle) * 6
-          // Nebula drift — particles drift slowly around their target position
-          const baseR  = Math.hypot(p.targetX - cx, p.targetY - cy) || 50
-          const drift  = Math.sin(t * 0.8 + p.angle * 3) * 4
-          const expand = pulse * (baseR < 40 ? 0.3 : baseR < 80 ? 0.6 : 1.0)
-          p.targetX = cx + Math.cos(p.angle + t*p.speed*20) * (baseR + expand + drift)
-          p.targetY = cy + Math.sin(p.angle + t*p.speed*20) * (baseR + expand + drift)
-          p.vx += (p.targetX - p.x) * 0.08
-          p.vy += (p.targetY - p.y) * 0.08
-          p.vx *= 0.75; p.vy *= 0.75
-        } else {
-          p.vx += (Math.random()-0.5)*0.02
-          p.vy += (Math.random()-0.5)*0.02
-          p.vx *= 0.98; p.vy *= 0.98
-          if (p.x < 0) p.x = canvas.width
-          if (p.x > canvas.width) p.x = 0
-          if (p.y < 0) p.y = canvas.height
-          if (p.y > canvas.height) p.y = 0
-        }
-        p.x += p.vx; p.y += p.vy
+      // Base ring radius — reacts to voice
+      const baseR = spk
+        ? 70 + Math.sin(t * 8) * amp * 30
+        : lst
+        ? 62 + Math.sin(t * 5) * 8
+        : 58 + Math.sin(t * 1.2) * 4
 
-        const r  = spk ? 180+amp*75 : lst ? 77 : 34
-        const g  = spk ? 210+amp*45 : lst ? 171 : 139
-        const op = asm ? p.opacity*(spk?1.3:lst?1.1:0.85) : p.opacity*0.6
+      angles.forEach(p => {
+        // Rotate
+        p.angle += p.speed * (spk ? 2.5 : lst ? 1.8 : 1.0)
+
+        // Individual radius variation
+        const r = baseR + Math.sin(t * 3 + p.offset * 10) * (spk ? amp * 20 : 5)
+
+        const x = cx + Math.cos(p.angle) * r
+        const y = cy + Math.sin(p.angle) * r
+
+        // Color — blue idle, cyan listening, bright white speaking
+        const color = spk
+          ? `rgba(200, 220, 255, ${0.6 + amp * 0.4})`
+          : lst
+          ? `rgba(77, 171, 247, 0.9)`
+          : `rgba(77, 171, 247, 0.6)`
 
         ctx.beginPath()
-        ctx.arc(p.x, p.y, p.size*(spk?1.4:1), 0, Math.PI*2)
-        ctx.fillStyle = `rgba(${r},${g},247,${Math.min(op,1)})`
+        ctx.arc(x, y, p.size * (spk ? 1.5 : 1), 0, Math.PI * 2)
+        ctx.fillStyle = color
         ctx.fill()
-
-        if (asm) {
-          for (let j=i+1; j<Math.min(i+5,particlesRef.current.length); j++) {
-            const p2 = particlesRef.current[j]
-            const d  = Math.hypot(p.x-p2.x, p.y-p2.y)
-            if (d < 50) {
-              ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p2.x,p2.y)
-              ctx.strokeStyle = `rgba(77,171,247,${0.10*(1-d/50)*(spk?2:1)})`
-              ctx.lineWidth = 0.4; ctx.stroke()
-            }
-          }
-        }
       })
 
-      if (asm) {
-        const gr = spk ? 30+amp*20 : lst ? 22 : 16
-        const grd = ctx.createRadialGradient(cx,cy,0,cx,cy,gr)
-        grd.addColorStop(0, spk?`rgba(180,210,255,${0.8+amp*0.2})`:'rgba(77,171,247,0.7)')
-        grd.addColorStop(1, 'rgba(77,171,247,0)')
-        ctx.beginPath(); ctx.arc(cx,cy,gr,0,Math.PI*2)
-        ctx.fillStyle = grd; ctx.fill()
+      // Inner glow
+      const glowR = spk ? 28 + amp * 15 : lst ? 22 : 18
+      const grd   = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR)
+      grd.addColorStop(0, spk ? `rgba(180, 210, 255, ${0.7 + amp*0.3})` : 'rgba(77, 171, 247, 0.5)')
+      grd.addColorStop(1, 'rgba(77, 171, 247, 0)')
+      ctx.beginPath()
+      ctx.arc(cx, cy, glowR, 0, Math.PI * 2)
+      ctx.fillStyle = grd
+      ctx.fill()
+
+      // Connection lines between nearby ring particles
+      for (let i = 0; i < angles.length; i++) {
+        const a1 = angles[i]
+        const a2 = angles[(i + 1) % angles.length]
+        const r1 = baseR + Math.sin(t * 3 + a1.offset * 10) * 5
+        const r2 = baseR + Math.sin(t * 3 + a2.offset * 10) * 5
+        const x1 = cx + Math.cos(a1.angle) * r1
+        const y1 = cy + Math.sin(a1.angle) * r1
+        const x2 = cx + Math.cos(a2.angle) * r2
+        const y2 = cy + Math.sin(a2.angle) * r2
+        ctx.beginPath()
+        ctx.moveTo(x1, y1)
+        ctx.lineTo(x2, y2)
+        ctx.strokeStyle = spk
+          ? `rgba(200, 220, 255, ${0.15 + amp * 0.2})`
+          : `rgba(77, 171, 247, 0.08)`
+        ctx.lineWidth = 0.5
+        ctx.stroke()
       }
 
       animRef.current = requestAnimationFrame(draw)
     }
 
-    resize(); draw()
-    window.addEventListener('resize', resize)
-    setTimeout(() => { assembledRef.current=true; setAssembled(true); setStatus('ATLAS ONLINE') }, 700)
-    return () => { cancelAnimationFrame(animRef.current); window.removeEventListener('resize', resize) }
+    setTimeout(() => { setAssembled(true); setStatus('ATLAS ONLINE') }, 500)
+    draw()
+
+    return () => {
+      cancelAnimationFrame(animRef.current)
+      window.removeEventListener('resize', resize)
+    }
   }, [])
 
+  // ── OpenAI TTS ──────────────────────────────────────────────────
   const speak = useCallback(async (text: string) => {
     if (!text.trim()) return
     speakingRef.current = true
     setSpeaking(true)
     setStatus('ATLAS SPEAKING')
 
-    // Amplitude simulation
     let t = 0
     const iv = setInterval(() => {
-      ampRef.current = 0.2 + Math.sin(t*4)*0.2 + Math.random()*0.4
+      ampRef.current = 0.2 + Math.sin(t*4)*0.25 + Math.random()*0.35
       t += 0.15
     }, 40)
 
@@ -169,162 +142,229 @@ export default function VoicePage() {
         body: JSON.stringify({ text }),
       })
       if (!res.ok) throw new Error('speak failed')
-      const blob = await res.blob()
-      const url  = URL.createObjectURL(blob)
+      const blob  = await res.blob()
+      const url   = URL.createObjectURL(blob)
       const audio = new Audio(url)
       audio.onended = audio.onerror = () => {
         clearInterval(iv)
-        ampRef.current      = 0
-        speakingRef.current = false
-        setSpeaking(false)
-        setStatus('ATLAS ONLINE')
+        ampRef.current = 0; speakingRef.current = false
+        setSpeaking(false); setStatus('ATLAS ONLINE')
         URL.revokeObjectURL(url)
       }
       await audio.play()
     } catch {
-      // Fallback to Web Speech API
       clearInterval(iv)
-      const utt = new SpeechSynthesisUtterance(text)
-      utt.rate = 0.92; utt.pitch = 0.80
-      utt.onend = utt.onerror = () => {
-        ampRef.current = 0; speakingRef.current = false
-        setSpeaking(false); setStatus('ATLAS ONLINE')
-      }
-      window.speechSynthesis.speak(utt)
+      ampRef.current = 0; speakingRef.current = false
+      setSpeaking(false); setStatus('ATLAS ONLINE')
     }
   }, [])
 
+  // ── Send to ATLAS ────────────────────────────────────────────────
   const sendToATLAS = useCallback(async (text: string) => {
-    if (!text.trim()||speaking) return
+    if (!text.trim() || speaking) return
     setStatus('ATLAS THINKING')
-    const newHistory: Message[] = [...history, {role:'user',content:text}]
-    setHistory(newHistory); setLastMsg(text)
+    const newHistory: Message[] = [...history, { role: 'user', content: text }]
+    setHistory(newHistory)
+    setLastMsg(text)
     try {
       const res  = await fetch('/api/intelligence', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ message:text, history:newHistory.slice(-6).map(m=>({role:m.role,content:m.content})) })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, history: newHistory.slice(-6).map(m => ({ role: m.role, content: m.content })) }),
       })
       const data = await res.json()
       const raw  = data.response || 'Processing complete.'
       const resp = raw.replace(/\*\*/g,'').replace(/\*/g,'').replace(/#{1,6}\s/g,'').replace(/`/g,'')
-      setHistory(prev=>[...prev,{role:'assistant',content:resp}])
-      setLastMsg(resp); speak(resp)
-    } catch { setStatus('CONNECTION ERROR'); setTimeout(()=>setStatus('ATLAS ONLINE'),2000) }
+      setHistory(prev => [...prev, { role: 'assistant', content: resp }])
+      setLastMsg(resp)
+      speak(resp)
+    } catch {
+      setStatus('CONNECTION ERROR')
+      setTimeout(() => setStatus('ATLAS ONLINE'), 2000)
+    }
   }, [history, speaking, speak])
 
-  const startListening = useCallback(async () => {
+  // ── Speech Recognition ───────────────────────────────────────────
+  const startListening = useCallback(() => {
     if (speaking) return
-    const SR = (window as any).SpeechRecognition||(window as any).webkitSpeechRecognition
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (!SR) { setStatus('USE TEXT INPUT'); return }
-    const recognition = new SR()
-    recognition.lang='en-US'; recognition.continuous=false; recognition.interimResults=false
-    recognition.onstart = () => { listeningRef.current=true; setListening(true); setStatus('LISTENING...') }
-    recognition.onresult = (e:any) => {
+    const r = new SR()
+    r.lang = 'en-US'; r.continuous = false; r.interimResults = false
+    r.onstart = () => { listeningRef.current = true; setListening(true); setStatus('LISTENING...') }
+    r.onresult = (e: any) => {
       const t = e.results[0][0].transcript
-      listeningRef.current=false; micAmpRef.current=0; setListening(false); sendToATLAS(t)
+      listeningRef.current = false; setListening(false); sendToATLAS(t)
     }
-    recognition.onerror = recognition.onend = () => {
-      listeningRef.current=false; micAmpRef.current=0; setListening(false)
+    r.onerror = r.onend = () => {
+      listeningRef.current = false; setListening(false)
       if (!speaking) setStatus('ATLAS ONLINE')
     }
-    recognition.start()
+    r.start()
   }, [speaking, sendToATLAS])
 
+  // ── Greeting ─────────────────────────────────────────────────────
   useEffect(() => {
     if (!started) return
     const t = setTimeout(() => {
-      const g = "I am ATLAS. Adaptive Trading and Learning Autonomous System. My nodes are active across equities, macro, and commodities. Speak or type — I am listening."
-      setHistory([{role:'assistant',content:g}]); setLastMsg(g); speak(g)
-    }, 1400)
+      const g = "I am ATLAS. Adaptive Trading and Learning Autonomous System. My nodes are active across equities, macro, and commodities. How can I assist you?"
+      setHistory([{ role: 'assistant', content: g }])
+      setLastMsg(g)
+      speak(g)
+    }, 600)
     return () => clearTimeout(t)
   }, [started])
 
   return (
     <div style={{ position:'relative', height:'calc(100vh - 64px)', background:'#050b14', overflow:'hidden', fontFamily:'Inter, sans-serif' }}>
-      <canvas ref={canvasRef} style={{ position:'absolute', inset:0, width:'100%', height:'100%' }} />
 
-      {/* Start overlay */}
-      {!started && assembled && (
-        <div style={{
-          position:'absolute', inset:0, zIndex:20,
-          display:'flex', flexDirection:'column',
-          alignItems:'center', justifyContent:'center',
-          background:'rgba(5,11,20,0.6)',
-        }}>
-          <div style={{ fontSize:11, letterSpacing:'0.18em', color:'#adb5bd', textTransform:'uppercase', marginBottom:24 }}>ATLAS VOICE INTERFACE</div>
-          <button onClick={()=>setStarted(true)} style={{
-            padding:'14px 36px', fontSize:13, fontWeight:600,
-            background:'rgba(34,139,230,0.15)',
-            border:'2px solid #228be6',
-            borderRadius:40, color:'#f8f9fa',
-            cursor:'pointer', letterSpacing:'0.08em',
-            fontFamily:'Inter, sans-serif',
-          }}>Initialise ATLAS</button>
-        </div>
-      )}
+      {/* Same particle background as other pages */}
+      <ParticleBackground />
+
+      {/* Ring canvas — centered */}
+      <canvas ref={canvasRef} style={{
+        position: 'absolute',
+        top: '50%', left: '50%',
+        transform: 'translate(-50%, -55%)',
+        width: 200, height: 200,
+        zIndex: 2,
+        opacity: assembled ? 1 : 0,
+        transition: 'opacity 0.6s',
+      }} />
 
       {/* Status */}
-      <div style={{ position:'absolute', top:'calc(50% - 200px)', left:'50%', transform:'translateX(-50%)', zIndex:10, textAlign:'center', opacity:assembled?1:0, transition:'opacity 0.6s' }}>
-        <div style={{ fontSize:10, fontWeight:700, letterSpacing:'0.18em', textTransform:'uppercase', color:speaking?'#c8dcff':listening?'#4dabf7':'#adb5bd', transition:'color 0.3s' }}>{status}</div>
+      <div style={{
+        position: 'absolute',
+        top: 'calc(50% - 160px)', left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 3, textAlign: 'center',
+        opacity: assembled ? 1 : 0,
+        transition: 'opacity 0.6s',
+      }}>
+        <div style={{
+          fontSize: 10, fontWeight: 700,
+          letterSpacing: '0.18em', textTransform: 'uppercase',
+          color: speaking ? '#c8dcff' : listening ? '#4dabf7' : '#adb5bd',
+          transition: 'color 0.3s',
+        }}>{status}</div>
       </div>
 
       {/* Last message */}
-      <div style={{ position:'absolute', top:'calc(50% + 110px)', left:'50%', transform:'translateX(-50%)', width:'65%', maxWidth:460, zIndex:10, textAlign:'center', opacity:assembled?1:0, transition:'opacity 0.6s' }}>
+      <div style={{
+        position: 'absolute',
+        top: 'calc(50% + 65px)', left: '50%',
+        transform: 'translateX(-50%)',
+        width: '65%', maxWidth: 460,
+        zIndex: 3, textAlign: 'center',
+        opacity: assembled ? 1 : 0,
+        transition: 'opacity 0.6s',
+      }}>
         {lastMsg && (
-          <div style={{ fontSize:12, lineHeight:1.7, color:speaking?'#f8f9fa':'#adb5bd', transition:'color 0.3s' }}>
-            {lastMsg.length>180 ? lastMsg.slice(0,180)+'...' : lastMsg}
+          <div style={{
+            fontSize: 12, lineHeight: 1.7,
+            color: speaking ? '#f8f9fa' : '#adb5bd',
+            transition: 'color 0.3s',
+          }}>
+            {lastMsg.length > 180 ? lastMsg.slice(0, 180) + '...' : lastMsg}
           </div>
         )}
       </div>
 
       {/* Mic button */}
-      <div style={{ position:'absolute', bottom:90, left:'50%', transform:'translateX(-50%)', zIndex:10, textAlign:'center', opacity:assembled?1:0, transition:'opacity 0.6s' }}>
-        <button onClick={startListening} disabled={listening||speaking} style={{
-          width:70, height:70, borderRadius:'50%',
-          background:listening?'rgba(239,68,68,0.25)':'rgba(34,139,230,0.15)',
-          border:`2px solid ${listening?'#ef4444':'#228be6'}`,
-          cursor:listening||speaking?'not-allowed':'pointer',
-          display:'flex', alignItems:'center', justifyContent:'center', fontSize:26,
-          boxShadow:listening?'0 0 24px rgba(239,68,68,0.5)':speaking?'0 0 24px rgba(34,139,230,0.3)':'none',
-          transition:'all 0.3s',
-        }}>{listening ? (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:listening?'#ef4444':'#4dabf7'}}>
-              <rect x="9" y="2" width="6" height="11" rx="3"/>
-              <path d="M5 10a7 7 0 0 0 14 0"/>
-              <line x1="12" y1="19" x2="12" y2="22"/>
-              <line x1="8" y1="22" x2="16" y2="22"/>
-            </svg>
-          ) : (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:'#4dabf7'}}>
-              <rect x="9" y="2" width="6" height="11" rx="3"/>
-              <path d="M5 10a7 7 0 0 0 14 0"/>
-              <line x1="12" y1="19" x2="12" y2="22"/>
-              <line x1="8" y1="22" x2="16" y2="22"/>
-            </svg>
-          )}</button>
-        <div style={{ marginTop:6, fontSize:9, color:'#adb5bd', letterSpacing:'0.1em', textTransform:'uppercase' }}>
-          {listening?'Listening...':'Tap to speak'}
+      <div style={{
+        position: 'absolute', bottom: 90, left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 3, textAlign: 'center',
+        opacity: assembled ? 1 : 0,
+        transition: 'opacity 0.6s',
+      }}>
+        <button onClick={startListening} disabled={listening || speaking} style={{
+          width: 64, height: 64, borderRadius: '50%',
+          background: listening ? 'rgba(239,68,68,0.2)' : 'rgba(34,139,230,0.15)',
+          border: `2px solid ${listening ? '#ef4444' : '#228be6'}`,
+          cursor: listening || speaking ? 'not-allowed' : 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: listening ? '0 0 20px rgba(239,68,68,0.4)' : 'none',
+          transition: 'all 0.3s',
+        }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={listening ? '#ef4444' : '#4dabf7'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="9" y="2" width="6" height="11" rx="3"/>
+            <path d="M5 10a7 7 0 0 0 14 0"/>
+            <line x1="12" y1="19" x2="12" y2="22"/>
+            <line x1="8" y1="22" x2="16" y2="22"/>
+          </svg>
+        </button>
+        <div style={{ marginTop: 6, fontSize: 9, color: '#adb5bd', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          {listening ? 'Listening...' : 'Tap to speak'}
         </div>
       </div>
 
-      {/* Stop */}
+      {/* Stop button */}
       {speaking && (
-        <button onClick={()=>{ window.speechSynthesis.cancel(); speakingRef.current=false; ampRef.current=0; setSpeaking(false); setStatus('ATLAS ONLINE') }}
-          style={{ position:'absolute', bottom:103, left:'calc(50% + 60px)', width:44, height:44, borderRadius:'50%', background:'rgba(245,158,11,0.2)', border:'2px solid #f59e0b', cursor:'pointer', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center', zIndex:10 }}>⏸</button>
+        <button onClick={() => {
+          speakingRef.current = false; ampRef.current = 0
+          setSpeaking(false); setStatus('ATLAS ONLINE')
+        }} style={{
+          position: 'absolute', bottom: 103, left: 'calc(50% + 48px)',
+          width: 40, height: 40, borderRadius: '50%',
+          background: 'rgba(245,158,11,0.2)', border: '2px solid #f59e0b',
+          cursor: 'pointer', fontSize: 14, zIndex: 3,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>⏸</button>
       )}
 
       {/* Text input */}
-      <div style={{ position:'absolute', bottom:18, left:'50%', transform:'translateX(-50%)', width:'68%', maxWidth:480, display:'flex', gap:8, zIndex:10, opacity:assembled?1:0, transition:'opacity 0.6s' }}>
-        <input value={inputText} onChange={e=>setInputText(e.target.value)}
-          onKeyDown={e=>{ if(e.key==='Enter'&&inputText.trim()&&!speaking){ sendToATLAS(inputText); setInputText('') } }}
+      <div style={{
+        position: 'absolute', bottom: 18, left: '50%',
+        transform: 'translateX(-50%)',
+        width: '68%', maxWidth: 480,
+        display: 'flex', gap: 8, zIndex: 3,
+        opacity: assembled ? 1 : 0,
+        transition: 'opacity 0.6s',
+      }}>
+        <input value={inputText} onChange={e => setInputText(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && inputText.trim() && !speaking) { sendToATLAS(inputText); setInputText('') } }}
           placeholder="Type to ATLAS..."
-          style={{ flex:1, padding:'9px 16px', fontSize:12, background:'rgba(10,19,36,0.85)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:24, color:'#f8f9fa', fontFamily:'Inter, sans-serif', outline:'none' }}
-          onFocus={e=>(e.currentTarget.style.borderColor='#228be6')}
-          onBlur={e=>(e.currentTarget.style.borderColor='rgba(255,255,255,0.08)')}
+          style={{
+            flex: 1, padding: '9px 16px', fontSize: 12,
+            background: 'rgba(10,19,36,0.85)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 24, color: '#f8f9fa',
+            fontFamily: 'Inter, sans-serif', outline: 'none',
+          }}
+          onFocus={e => (e.currentTarget.style.borderColor = '#228be6')}
+          onBlur={e  => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')}
         />
-        <button onClick={()=>{ if(inputText.trim()&&!speaking){ sendToATLAS(inputText); setInputText('') } }}
-          style={{ padding:'9px 18px', fontSize:11, fontWeight:600, background:'#228be6', color:'#fff', border:'none', borderRadius:24, cursor:'pointer', fontFamily:'Inter, sans-serif' }}>Send</button>
+        <button onClick={() => { if (inputText.trim() && !speaking) { sendToATLAS(inputText); setInputText('') } }}
+          style={{
+            padding: '9px 18px', fontSize: 11, fontWeight: 600,
+            background: '#228be6', color: '#fff',
+            border: 'none', borderRadius: 24, cursor: 'pointer',
+            fontFamily: 'Inter, sans-serif',
+          }}>Send</button>
       </div>
+
+      {/* Start overlay */}
+      {!started && assembled && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 20,
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(5,11,20,0.7)',
+        }}>
+          <div style={{ fontSize: 11, letterSpacing: '0.18em', color: '#adb5bd', textTransform: 'uppercase', marginBottom: 24 }}>
+            ATLAS VOICE INTERFACE
+          </div>
+          <button onClick={() => setStarted(true)} style={{
+            padding: '14px 36px', fontSize: 13, fontWeight: 600,
+            background: 'rgba(34,139,230,0.15)',
+            border: '2px solid #228be6',
+            borderRadius: 40, color: '#f8f9fa',
+            cursor: 'pointer', letterSpacing: '0.08em',
+            fontFamily: 'Inter, sans-serif',
+          }}>Initialise ATLAS</button>
+        </div>
+      )}
     </div>
   )
 }
