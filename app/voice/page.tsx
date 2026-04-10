@@ -222,7 +222,7 @@ export default function VoicePage() {
       <ParticleBackground />
 
       {/* Ring canvas — centered */}
-      <canvas ref={canvasRef} style={{
+      <canvas ref={canvasRef} suppressHydrationWarning style={{
         position: 'absolute',
         top: '50%', left: '50%',
         transform: 'translate(-50%, -55%)',
