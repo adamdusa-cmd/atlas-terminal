@@ -38,21 +38,28 @@ export default function VoicePage() {
     }
 
     const initParticles = () => {
-      const count = 280
+      const count = 350
       const cx = canvas.width / 2
       const cy = canvas.height / 2 - 64
       particlesRef.current = Array.from({ length: count }, (_, i) => {
         const homeX  = Math.random() * canvas.width
         const homeY  = Math.random() * canvas.height
-        const orbitR = 40 + Math.random() * 120
-        const angle  = (i / count) * Math.PI * 2 + Math.random() * 0.5
+        // Multi-layer orbital system — inner core + outer cloud
+        const layer  = Math.random()
+        const orbitR = layer < 0.3
+          ? 20  + Math.random() * 40   // inner core
+          : layer < 0.7
+          ? 60  + Math.random() * 60   // mid cloud
+          : 120 + Math.random() * 80   // outer wisps
+        const angle  = Math.random() * Math.PI * 2
         return {
           x: homeX, y: homeY, homeX, homeY,
           targetX: cx + Math.cos(angle) * orbitR,
           targetY: cy + Math.sin(angle) * orbitR,
           vx: (Math.random()-0.5)*0.3, vy: (Math.random()-0.5)*0.3,
-          size: 0.8+Math.random()*1.8, opacity: 0.2+Math.random()*0.5,
-          angle, speed: 0.003+Math.random()*0.006,
+          size: layer < 0.3 ? 1.5+Math.random()*2 : 0.6+Math.random()*1.4,
+          opacity: layer < 0.3 ? 0.5+Math.random()*0.5 : 0.15+Math.random()*0.45,
+          angle, speed: (0.002+Math.random()*0.004) * (layer < 0.3 ? 1.5 : 1),
         }
       })
     }
@@ -75,8 +82,11 @@ export default function VoicePage() {
             ? Math.sin(t*10 + p.angle*3) * amp * 50
             : lst ? Math.sin(t*6 + p.angle*2) * mic * 40
             : Math.sin(t*1.5 + p.angle) * 6
-          p.targetX = cx + Math.cos(baseAngle) * (90 + pulse)
-          p.targetY = cy + Math.sin(baseAngle) * (90 + pulse)
+          // Each particle has its own orbit radius based on initial target distance
+          const baseR = Math.hypot(p.targetX - cx, p.targetY - cy) || 90
+          const wobble = Math.sin(t * 2 + p.angle * 5) * 8
+          p.targetX = cx + Math.cos(baseAngle) * (baseR + pulse + wobble)
+          p.targetY = cy + Math.sin(baseAngle) * (baseR + pulse + wobble)
           p.vx += (p.targetX - p.x) * 0.08
           p.vy += (p.targetY - p.y) * 0.08
           p.vx *= 0.75; p.vy *= 0.75
