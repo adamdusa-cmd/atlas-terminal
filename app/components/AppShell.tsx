@@ -7,6 +7,12 @@ import ParticleBackground from '@/app/components/ParticleBackground'
 
 const NAV = [
   {
+    section: 'DASHBOARD',
+    key: 'dashboard',
+    href: '/overview',
+    items: [],
+  },
+  {
     section: 'ATLAS EQUITIES',
     key: 'terminal',
     items: [
