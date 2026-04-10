@@ -38,31 +38,34 @@ export default function VoicePage() {
     }
 
     const initParticles = () => {
-      const count = 500
+      const count = 600
       const cx = canvas.width / 2
       const cy = canvas.height / 2 - 64
       particlesRef.current = Array.from({ length: count }, (_, i) => {
-        const homeX  = Math.random() * canvas.width
-        const homeY  = Math.random() * canvas.height
-        // Gaussian-like distribution — most particles near center
-        const u1 = Math.random(), u2 = Math.random()
-        const gauss = Math.sqrt(-2*Math.log(u1)) * Math.cos(2*Math.PI*u2)
-        const orbitR = Math.abs(gauss) * 55 + Math.random() * 20
-        const angle  = Math.random() * Math.PI * 2
-        const layer  = orbitR < 30 ? 0 : orbitR < 70 ? 1 : 2
+        const homeX = Math.random() * canvas.width
+        const homeY = Math.random() * canvas.height
+        // Nebula distribution — exponential falloff from center
+        const angle = Math.random() * Math.PI * 2
+        const r     = Math.pow(Math.random(), 0.4) * 160  // exponential — dense core
+        const tx    = cx + Math.cos(angle) * r
+        const ty    = cy + Math.sin(angle) * r
+        const dist  = r
         return {
           x: homeX, y: homeY, homeX, homeY,
-          targetX: cx + Math.cos(angle) * orbitR,
-          targetY: cy + Math.sin(angle) * orbitR,
-          vx: (Math.random()-0.5)*0.3, vy: (Math.random()-0.5)*0.3,
-          size: layer===0 ? 1.8+Math.random()*2.5
-              : layer===1 ? 1.0+Math.random()*1.5
-              : 0.5+Math.random()*1.0,
-          opacity: layer===0 ? 0.6+Math.random()*0.4
-                 : layer===1 ? 0.3+Math.random()*0.4
-                 : 0.1+Math.random()*0.3,
+          targetX: tx, targetY: ty,
+          vx: (Math.random()-0.5)*0.2, vy: (Math.random()-0.5)*0.2,
+          size: dist < 30
+            ? 1.5 + Math.random()*3.0
+            : dist < 80
+            ? 0.8 + Math.random()*1.8
+            : 0.3 + Math.random()*1.2,
+          opacity: dist < 30
+            ? 0.7 + Math.random()*0.3
+            : dist < 80
+            ? 0.3 + Math.random()*0.4
+            : 0.08 + Math.random()*0.25,
           angle,
-          speed: 0.001 + Math.random()*0.004,
+          speed: 0.0005 + Math.random()*0.002,
         }
       })
     }
@@ -85,11 +88,12 @@ export default function VoicePage() {
             ? Math.sin(t*10 + p.angle*3) * amp * 50
             : lst ? Math.sin(t*6 + p.angle*2) * mic * 40
             : Math.sin(t*1.5 + p.angle) * 6
-          // Each particle has its own orbit radius based on initial target distance
-          const baseR = Math.hypot(p.targetX - cx, p.targetY - cy) || 90
-          const wobble = Math.sin(t * 2 + p.angle * 5) * 8
-          p.targetX = cx + Math.cos(baseAngle) * (baseR + pulse + wobble)
-          p.targetY = cy + Math.sin(baseAngle) * (baseR + pulse + wobble)
+          // Nebula drift — particles drift slowly around their target position
+          const baseR  = Math.hypot(p.targetX - cx, p.targetY - cy) || 50
+          const drift  = Math.sin(t * 0.8 + p.angle * 3) * 4
+          const expand = pulse * (baseR < 40 ? 0.3 : baseR < 80 ? 0.6 : 1.0)
+          p.targetX = cx + Math.cos(p.angle + t*p.speed*20) * (baseR + expand + drift)
+          p.targetY = cy + Math.sin(p.angle + t*p.speed*20) * (baseR + expand + drift)
           p.vx += (p.targetX - p.x) * 0.08
           p.vy += (p.targetY - p.y) * 0.08
           p.vx *= 0.75; p.vy *= 0.75
