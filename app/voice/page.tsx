@@ -38,28 +38,31 @@ export default function VoicePage() {
     }
 
     const initParticles = () => {
-      const count = 350
+      const count = 500
       const cx = canvas.width / 2
       const cy = canvas.height / 2 - 64
       particlesRef.current = Array.from({ length: count }, (_, i) => {
         const homeX  = Math.random() * canvas.width
         const homeY  = Math.random() * canvas.height
-        // Multi-layer orbital system — inner core + outer cloud
-        const layer  = Math.random()
-        const orbitR = layer < 0.3
-          ? 20  + Math.random() * 40   // inner core
-          : layer < 0.7
-          ? 60  + Math.random() * 60   // mid cloud
-          : 120 + Math.random() * 80   // outer wisps
+        // Gaussian-like distribution — most particles near center
+        const u1 = Math.random(), u2 = Math.random()
+        const gauss = Math.sqrt(-2*Math.log(u1)) * Math.cos(2*Math.PI*u2)
+        const orbitR = Math.abs(gauss) * 55 + Math.random() * 20
         const angle  = Math.random() * Math.PI * 2
+        const layer  = orbitR < 30 ? 0 : orbitR < 70 ? 1 : 2
         return {
           x: homeX, y: homeY, homeX, homeY,
           targetX: cx + Math.cos(angle) * orbitR,
           targetY: cy + Math.sin(angle) * orbitR,
           vx: (Math.random()-0.5)*0.3, vy: (Math.random()-0.5)*0.3,
-          size: layer < 0.3 ? 1.5+Math.random()*2 : 0.6+Math.random()*1.4,
-          opacity: layer < 0.3 ? 0.5+Math.random()*0.5 : 0.15+Math.random()*0.45,
-          angle, speed: (0.002+Math.random()*0.004) * (layer < 0.3 ? 1.5 : 1),
+          size: layer===0 ? 1.8+Math.random()*2.5
+              : layer===1 ? 1.0+Math.random()*1.5
+              : 0.5+Math.random()*1.0,
+          opacity: layer===0 ? 0.6+Math.random()*0.4
+                 : layer===1 ? 0.3+Math.random()*0.4
+                 : 0.1+Math.random()*0.3,
+          angle,
+          speed: 0.001 + Math.random()*0.004,
         }
       })
     }
