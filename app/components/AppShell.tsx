@@ -63,7 +63,8 @@ const NAV = [
     section: 'INTELLIGENCE',
     key: 'intelligence',
     items: [
-      { label: 'ATLAS', href: '/intelligence' },
+      { label: 'ATLAS Chat',  href: '/intelligence' },
+      { label: 'ATLAS Voice', href: '/voice'        },
     ]
   },
 ]
