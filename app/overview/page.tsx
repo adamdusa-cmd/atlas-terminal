@@ -27,11 +27,137 @@ const SYSTEMS = [
 
 const SC_URL = 'https://atlas-scheduler-production-a62e.up.railway.app'
 
+
+// ── P&L Line Chart ────────────────────────────────────────────────
+function PnLChart({ systems, pnlHistory }: { systems: any[], pnlHistory: Record<string,any[]> }) {
+  const W = 800, H = 200, PAD = 40
+
+  // Merge all dates
+  const allDates = Array.from(new Set(
+    systems.flatMap(s => (pnlHistory[s.key] || []).map((d: any) => d.date))
+  )).sort()
+
+  if (allDates.length === 0) {
+    return (
+      <div style={{ height:200, display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <div style={{ textAlign:'center' }}>
+          <div style={{ fontSize:24, marginBottom:8 }}>📈</div>
+          <div style={{ fontSize:12, color:'#adb5bd' }}>P&L history will appear here after April 13</div>
+          <div style={{ fontSize:10, color:'#adb5bd', marginTop:4 }}>Paper trading begins when IB goes live</div>
+        </div>
+      </div>
+    )
+  }
+
+  // Build data per system + average
+  const lines = systems.map(sys => ({
+    key:    sys.key,
+    color:  sys.color,
+    name:   sys.name,
+    values: allDates.map(date => {
+      const point = (pnlHistory[sys.key] || []).find((d: any) => d.date === date)
+      return point ? point.pnl_pct * 100 : null
+    })
+  }))
+
+  // Average line
+  const avgValues = allDates.map((_, i) => {
+    const vals = lines.map(l => l.values[i]).filter(v => v !== null) as number[]
+    return vals.length > 0 ? vals.reduce((a,b) => a+b, 0) / vals.length : null
+  })
+  lines.push({ key:'avg', color:'#ffffff', name:'Average', values: avgValues })
+
+  // Scale
+  const allVals = lines.flatMap(l => l.values).filter(v => v !== null) as number[]
+  const minVal  = Math.min(...allVals, -1)
+  const maxVal  = Math.max(...allVals, 1)
+  const range   = maxVal - minVal || 1
+
+  const xScale = (i: number) => PAD + (i / Math.max(allDates.length - 1, 1)) * (W - PAD*2)
+  const yScale = (v: number) => PAD + (1 - (v - minVal) / range) * (H - PAD*2)
+
+  const buildPath = (values: (number|null)[]) => {
+    const points = values.map((v, i) => v !== null ? `${xScale(i).toFixed(1)},${yScale(v).toFixed(1)}` : null)
+    let path = ''
+    let inPath = false
+    points.forEach((p, i) => {
+      if (p) {
+        path += inPath ? ` L${p}` : ` M${p}`
+        inPath = true
+      } else {
+        inPath = false
+      }
+    })
+    return path.trim()
+  }
+
+  // Zero line Y
+  const zeroY = yScale(0)
+
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width:'100%', height:'auto' }}>
+        {/* Zero line */}
+        <line x1={PAD} y1={zeroY} x2={W-PAD} y2={zeroY}
+          stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="4,4"/>
+        <text x={PAD-4} y={zeroY+4} fontSize="9" fill="rgba(255,255,255,0.3)" textAnchor="end">0%</text>
+
+        {/* Grid lines */}
+        {[minVal, (minVal+maxVal)/2, maxVal].map((v, i) => (
+          <g key={i}>
+            <line x1={PAD} y1={yScale(v)} x2={W-PAD} y2={yScale(v)}
+              stroke="rgba(255,255,255,0.05)" strokeWidth="1"/>
+            <text x={PAD-4} y={yScale(v)+4} fontSize="9" fill="rgba(255,255,255,0.25)" textAnchor="end">
+              {v.toFixed(1)}%
+            </text>
+          </g>
+        ))}
+
+        {/* Date labels */}
+        {allDates.filter((_, i) => i % Math.max(Math.floor(allDates.length/6),1) === 0).map((date, i) => (
+          <text key={date} x={xScale(allDates.indexOf(date))} y={H-8}
+            fontSize="8" fill="rgba(255,255,255,0.3)" textAnchor="middle">
+            {date.slice(5)}
+          </text>
+        ))}
+
+        {/* Lines */}
+        {lines.map(line => (
+          <path key={line.key}
+            d={buildPath(line.values)}
+            fill="none"
+            stroke={line.color}
+            strokeWidth={line.key === 'avg' ? 2 : 1.5}
+            strokeDasharray={line.key === 'avg' ? '6,3' : 'none'}
+            opacity={line.key === 'avg' ? 1 : 0.8}
+          />
+        ))}
+      </svg>
+
+      {/* Legend */}
+      <div style={{ display:'flex', gap:16, flexWrap:'wrap', marginTop:8 }}>
+        {lines.map(line => (
+          <div key={line.key} style={{ display:'flex', alignItems:'center', gap:6 }}>
+            <div style={{
+              width:16, height:2,
+              background:line.color,
+              borderRadius:1,
+              opacity: line.key === 'avg' ? 1 : 0.8,
+            }}/>
+            <span style={{ fontSize:10, color:'#adb5bd' }}>{line.name}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function OverviewPage() {
   const [systems,   setSystems]   = useState<Record<string,any>>({})
   const [scAlloc,   setSCAlloc]   = useState<any>(null)
   const [lastUpdate,setLastUpdate]= useState<string>('')
-  const [perf, setPerf] = useState<Record<string,any>>({})
+  const [perf,       setPerf]       = useState<Record<string,any>>({})
+  const [pnlHistory, setPnlHistory] = useState<Record<string,any[]>>({})
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -70,6 +196,17 @@ export default function OverviewPage() {
         } catch {}
       }))
       setPerf(perfResults)
+
+      // Fetch P&L history per system
+      const histResults: Record<string,any[]> = {}
+      await Promise.all(SYSTEMS.map(async sys => {
+        try {
+          const r = await fetch(`${sys.url}/api/performance-history`)
+          const d = await r.json()
+          histResults[sys.key] = d.history || []
+        } catch { histResults[sys.key] = [] }
+      }))
+      setPnlHistory(histResults)
     }
 
     fetchAll()
@@ -331,6 +468,14 @@ export default function OverviewPage() {
             )
           })}
         </div>
+      </div>
+
+      {/* P&L Chart */}
+      <div className="atlas-card" style={{ marginTop:12 }}>
+        <div style={{ fontSize:11, fontWeight:600, color:'#f8f9fa', letterSpacing:'0.08em', marginBottom:12 }}>
+          DAILY P&L EVOLUTION
+        </div>
+        <PnLChart systems={SYSTEMS} pnlHistory={pnlHistory} />
       </div>
 
       <div style={{ textAlign:'center', padding:'20px 0 8px', fontSize:10, color:'var(--atlas-muted)' }}>
