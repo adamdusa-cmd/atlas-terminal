@@ -25,6 +25,7 @@ export default function VoicePage() {
   const [history,   setHistory]   = useState<Message[]>([])
   const [inputText, setInputText] = useState('')
   const [lastMsg,   setLastMsg]   = useState('')
+  const [started,   setStarted]   = useState(false)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -46,7 +47,7 @@ export default function VoicePage() {
         const homeY = Math.random() * canvas.height
         // Nebula distribution — exponential falloff from center
         const angle = Math.random() * Math.PI * 2
-        const r     = Math.pow(Math.random(), 0.4) * 160  // exponential — dense core
+        const r     = Math.pow(Math.random(), 0.4) * 90   // exponential — dense core
         const tx    = cx + Math.cos(angle) * r
         const ty    = cy + Math.sin(angle) * r
         const dist  = r
@@ -230,16 +231,37 @@ export default function VoicePage() {
   }, [speaking, sendToATLAS])
 
   useEffect(() => {
+    if (!started) return
     const t = setTimeout(() => {
       const g = "I am ATLAS. Adaptive Trading and Learning Autonomous System. My nodes are active across equities, macro, and commodities. Speak or type — I am listening."
       setHistory([{role:'assistant',content:g}]); setLastMsg(g); speak(g)
     }, 1400)
     return () => clearTimeout(t)
-  }, [])
+  }, [started])
 
   return (
     <div style={{ position:'relative', height:'calc(100vh - 64px)', background:'#050b14', overflow:'hidden', fontFamily:'Inter, sans-serif' }}>
       <canvas ref={canvasRef} style={{ position:'absolute', inset:0, width:'100%', height:'100%' }} />
+
+      {/* Start overlay */}
+      {!started && assembled && (
+        <div style={{
+          position:'absolute', inset:0, zIndex:20,
+          display:'flex', flexDirection:'column',
+          alignItems:'center', justifyContent:'center',
+          background:'rgba(5,11,20,0.6)',
+        }}>
+          <div style={{ fontSize:11, letterSpacing:'0.18em', color:'#adb5bd', textTransform:'uppercase', marginBottom:24 }}>ATLAS VOICE INTERFACE</div>
+          <button onClick={()=>setStarted(true)} style={{
+            padding:'14px 36px', fontSize:13, fontWeight:600,
+            background:'rgba(34,139,230,0.15)',
+            border:'2px solid #228be6',
+            borderRadius:40, color:'#f8f9fa',
+            cursor:'pointer', letterSpacing:'0.08em',
+            fontFamily:'Inter, sans-serif',
+          }}>Initialise ATLAS</button>
+        </div>
+      )}
 
       {/* Status */}
       <div style={{ position:'absolute', top:'calc(50% - 200px)', left:'50%', transform:'translateX(-50%)', zIndex:10, textAlign:'center', opacity:assembled?1:0, transition:'opacity 0.6s' }}>
