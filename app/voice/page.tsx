@@ -249,27 +249,6 @@ export default function VoicePage() {
         }}>{status}</div>
       </div>
 
-      {/* Last message */}
-      <div style={{
-        position: 'absolute',
-        top: 'calc(50% + 65px)', left: '50%',
-        transform: 'translateX(-50%)',
-        width: '65%', maxWidth: 460,
-        zIndex: 3, textAlign: 'center',
-        opacity: assembled ? 1 : 0,
-        transition: 'opacity 0.6s',
-      }}>
-        {lastMsg && (
-          <div style={{
-            fontSize: 12, lineHeight: 1.7,
-            color: speaking ? '#f8f9fa' : '#adb5bd',
-            transition: 'color 0.3s',
-          }}>
-            {lastMsg.length > 180 ? lastMsg.slice(0, 180) + '...' : lastMsg}
-          </div>
-        )}
-      </div>
-
       {/* Mic button */}
       <div style={{
         position: 'absolute', bottom: 90, left: '50%',
