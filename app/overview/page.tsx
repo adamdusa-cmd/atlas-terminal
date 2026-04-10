@@ -172,13 +172,14 @@ export default function OverviewPage() {
       const results: Record<string,any> = {}
       await Promise.all(SYSTEMS.map(async sys => {
         try {
-          const [status, parliament, picks, portfolio] = await Promise.all([
+          const [status, parliament, picks, portfolio, risk] = await Promise.all([
             fetch(`${sys.url}/api/status`).then(r => r.json()),
             fetch(`${sys.url}/api/parliament`).then(r => r.json()),
             fetch(`${sys.url}/api/top-picks`).then(r => r.json()),
             fetch(`${sys.url}/api/portfolio`).then(r => r.json()).catch(() => null),
+            fetch(`${sys.url}/api/risk`).then(r => r.json()).catch(() => null),
           ])
-          results[sys.key] = { status, parliament, picks: picks.picks || [], portfolio }
+          results[sys.key] = { status, parliament, picks: picks.picks || [], portfolio, risk }
         } catch {
           results[sys.key] = null
         }
@@ -215,8 +216,11 @@ export default function OverviewPage() {
   }, [])
 
   // Total portfolio
+  const INITIAL_CAPITAL: Record<string,number> = {
+    equities: 10000, macro: 50000, commodities: 30000
+  }
   const totalEquity = SYSTEMS.reduce((sum, sys) => {
-    const eq = systems[sys.key]?.portfolio?.total_equity || 0
+    const eq = systems[sys.key]?.portfolio?.total_equity || INITIAL_CAPITAL[sys.key] || 0
     return sum + eq
   }, 0)
   const totalPnl = SYSTEMS.reduce((sum, sys) => {
@@ -349,7 +353,7 @@ export default function OverviewPage() {
                 <div style={{ background:'rgba(255,255,255,0.04)', borderRadius:4, padding:'6px 8px' }}>
                   <div className="atlas-label">G Value</div>
                   <div style={{ fontSize:13, fontWeight:600, color:'#f8f9fa' }}>
-                    {status?.g_value?.toFixed(3) ?? '--'}
+                    {s?.risk?.G?.toFixed(3) ?? s?.risk?.g_value?.toFixed(3) ?? '--'}
                   </div>
                 </div>
                 <div style={{ background:'rgba(255,255,255,0.04)', borderRadius:4, padding:'6px 8px' }}>
