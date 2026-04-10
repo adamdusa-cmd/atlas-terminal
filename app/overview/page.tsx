@@ -31,6 +31,7 @@ export default function OverviewPage() {
   const [systems,   setSystems]   = useState<Record<string,any>>({})
   const [scAlloc,   setSCAlloc]   = useState<any>(null)
   const [lastUpdate,setLastUpdate]= useState<string>('')
+  const [perf, setPerf] = useState<Record<string,any>>({})
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -58,6 +59,17 @@ export default function OverviewPage() {
       }))
       setSystems(results)
       setLastUpdate(new Date().toLocaleTimeString('en-GB', {hour12:false}))
+
+      // Fetch performance/history per system
+      const perfResults: Record<string,any> = {}
+      await Promise.all(SYSTEMS.map(async sys => {
+        try {
+          const r = await fetch(`${sys.url}/api/portfolio`)
+          const d = await r.json()
+          perfResults[sys.key] = d
+        } catch {}
+      }))
+      setPerf(perfResults)
     }
 
     fetchAll()
@@ -251,6 +263,74 @@ export default function OverviewPage() {
             </div>
           )
         })}
+      </div>
+
+      {/* Performance */}
+      <div className="atlas-card" style={{ marginTop:12 }}>
+        <div style={{ fontSize:11, fontWeight:600, color:'#f8f9fa', letterSpacing:'0.08em', marginBottom:12 }}>
+          PERFORMANCE
+        </div>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8 }}>
+          {/* Combined */}
+          <div style={{ background:'rgba(255,255,255,0.04)', borderRadius:6, padding:'10px 12px' }}>
+            <div className="atlas-label" style={{ marginBottom:4 }}>TOTAL PORTFOLIO</div>
+            <div style={{ fontSize:18, fontWeight:700, color: totalPnl >= 0 ? '#22c55e' : '#ef4444' }}>
+              {totalEquity > 0 ? `${(totalPnl*100).toFixed(2)}%` : '--'}
+            </div>
+            <div className="atlas-label" style={{ marginTop:2 }}>Daily P&L</div>
+            <div style={{ marginTop:6, fontSize:13, fontWeight:600, color:'#f8f9fa' }}>
+              {totalEquity > 0 ? `$${totalEquity.toLocaleString(undefined,{maximumFractionDigits:0})}` : '--'}
+            </div>
+            <div className="atlas-label">Total AUM</div>
+          </div>
+          {/* Per system */}
+          {SYSTEMS.map(sys => {
+            const p = perf[sys.key]
+            const pnl     = p?.daily_pnl_pct || 0
+            const equity  = p?.total_equity || 0
+            const ytd     = p?.ytd_pnl_pct || 0
+            const trades  = p?.total_trades || 0
+            const winRate = p?.win_rate || 0
+            return (
+              <div key={sys.key} style={{
+                background:'rgba(255,255,255,0.04)', borderRadius:6, padding:'10px 12px',
+                borderTop: `2px solid ${sys.color}`,
+              }}>
+                <div className="atlas-label" style={{ marginBottom:4 }}>{sys.name}</div>
+                <div style={{ fontSize:18, fontWeight:700, color: pnl >= 0 ? '#22c55e' : '#ef4444' }}>
+                  {equity > 0 ? `${(pnl*100).toFixed(2)}%` : '--'}
+                </div>
+                <div className="atlas-label" style={{ marginTop:2 }}>Daily P&L</div>
+                <div style={{ marginTop:6, display:'grid', gridTemplateColumns:'1fr 1fr', gap:4 }}>
+                  <div>
+                    <div style={{ fontSize:11, fontWeight:600, color:'#f8f9fa' }}>
+                      {equity > 0 ? `$${Math.round(equity).toLocaleString()}` : '--'}
+                    </div>
+                    <div className="atlas-label">Equity</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize:11, fontWeight:600, color: winRate > 0.5 ? '#22c55e' : '#adb5bd' }}>
+                      {winRate > 0 ? `${(winRate*100).toFixed(0)}%` : '--'}
+                    </div>
+                    <div className="atlas-label">Win Rate</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize:11, fontWeight:600, color:'#f8f9fa' }}>
+                      {trades || '--'}
+                    </div>
+                    <div className="atlas-label">Trades</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize:11, fontWeight:600, color: ytd >= 0 ? '#22c55e' : '#ef4444' }}>
+                      {ytd !== 0 ? `${(ytd*100).toFixed(2)}%` : '--'}
+                    </div>
+                    <div className="atlas-label">YTD</div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       <div style={{ textAlign:'center', padding:'20px 0 8px', fontSize:10, color:'var(--atlas-muted)' }}>
