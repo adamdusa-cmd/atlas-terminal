@@ -38,13 +38,13 @@ export default function VoicePage() {
     }
 
     const initParticles = () => {
-      const count = 200
+      const count = 280
       const cx = canvas.width / 2
       const cy = canvas.height / 2 - 64
       particlesRef.current = Array.from({ length: count }, (_, i) => {
         const homeX  = Math.random() * canvas.width
         const homeY  = Math.random() * canvas.height
-        const orbitR = 80 + Math.random() * 80
+        const orbitR = 40 + Math.random() * 120
         const angle  = (i / count) * Math.PI * 2 + Math.random() * 0.5
         return {
           x: homeX, y: homeY, homeX, homeY,
@@ -104,9 +104,9 @@ export default function VoicePage() {
           for (let j=i+1; j<Math.min(i+5,particlesRef.current.length); j++) {
             const p2 = particlesRef.current[j]
             const d  = Math.hypot(p.x-p2.x, p.y-p2.y)
-            if (d < 35) {
+            if (d < 50) {
               ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p2.x,p2.y)
-              ctx.strokeStyle = `rgba(77,171,247,${0.12*(1-d/35)*(spk?2:1)})`
+              ctx.strokeStyle = `rgba(77,171,247,${0.10*(1-d/50)*(spk?2:1)})`
               ctx.lineWidth = 0.4; ctx.stroke()
             }
           }
@@ -131,30 +131,49 @@ export default function VoicePage() {
     return () => { cancelAnimationFrame(animRef.current); window.removeEventListener('resize', resize) }
   }, [])
 
-  const speak = useCallback((text: string) => {
-    if (!window.speechSynthesis) return
-    window.speechSynthesis.cancel()
-    const utt = new SpeechSynthesisUtterance(text)
-    utt.rate=0.92; utt.pitch=0.80; utt.volume=1.0
-    const setVoice = () => {
-      const vs = window.speechSynthesis.getVoices()
-      const v  = vs.find(v=>v.name.includes('Daniel'))
-             || vs.find(v=>v.name.includes('Google UK English Male'))
-             || vs.find(v=>v.lang==='en-GB') || vs.find(v=>v.lang.startsWith('en')) || vs[0]
-      if (v) utt.voice = v
-    }
-    setVoice()
-    utt.onstart = () => {
-      speakingRef.current=true; setSpeaking(true); setStatus('ATLAS SPEAKING')
-      let t=0
-      const iv = setInterval(()=>{ ampRef.current=0.2+Math.sin(t*4)*0.2+Math.random()*0.4; t+=0.15 }, 40)
-      utt.onend = utt.onerror = () => {
-        clearInterval(iv); ampRef.current=0; speakingRef.current=false; setSpeaking(false); setStatus('ATLAS ONLINE')
+  const speak = useCallback(async (text: string) => {
+    if (!text.trim()) return
+    speakingRef.current = true
+    setSpeaking(true)
+    setStatus('ATLAS SPEAKING')
+
+    // Amplitude simulation
+    let t = 0
+    const iv = setInterval(() => {
+      ampRef.current = 0.2 + Math.sin(t*4)*0.2 + Math.random()*0.4
+      t += 0.15
+    }, 40)
+
+    try {
+      const res = await fetch('/api/speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      })
+      if (!res.ok) throw new Error('speak failed')
+      const blob = await res.blob()
+      const url  = URL.createObjectURL(blob)
+      const audio = new Audio(url)
+      audio.onended = audio.onerror = () => {
+        clearInterval(iv)
+        ampRef.current      = 0
+        speakingRef.current = false
+        setSpeaking(false)
+        setStatus('ATLAS ONLINE')
+        URL.revokeObjectURL(url)
       }
+      await audio.play()
+    } catch {
+      // Fallback to Web Speech API
+      clearInterval(iv)
+      const utt = new SpeechSynthesisUtterance(text)
+      utt.rate = 0.92; utt.pitch = 0.80
+      utt.onend = utt.onerror = () => {
+        ampRef.current = 0; speakingRef.current = false
+        setSpeaking(false); setStatus('ATLAS ONLINE')
+      }
+      window.speechSynthesis.speak(utt)
     }
-    if (window.speechSynthesis.getVoices().length===0) {
-      window.speechSynthesis.onvoiceschanged = () => { setVoice(); window.speechSynthesis.speak(utt) }
-    } else { window.speechSynthesis.speak(utt) }
   }, [])
 
   const sendToATLAS = useCallback(async (text: string) => {
@@ -168,7 +187,8 @@ export default function VoicePage() {
         body: JSON.stringify({ message:text, history:newHistory.slice(-6).map(m=>({role:m.role,content:m.content})) })
       })
       const data = await res.json()
-      const resp = data.response || 'Processing complete.'
+      const raw  = data.response || 'Processing complete.'
+      const resp = raw.replace(/\*\*/g,'').replace(/\*/g,'').replace(/#{1,6}\s/g,'').replace(/`/g,'')
       setHistory(prev=>[...prev,{role:'assistant',content:resp}])
       setLastMsg(resp); speak(resp)
     } catch { setStatus('CONNECTION ERROR'); setTimeout(()=>setStatus('ATLAS ONLINE'),2000) }
@@ -228,7 +248,21 @@ export default function VoicePage() {
           display:'flex', alignItems:'center', justifyContent:'center', fontSize:26,
           boxShadow:listening?'0 0 24px rgba(239,68,68,0.5)':speaking?'0 0 24px rgba(34,139,230,0.3)':'none',
           transition:'all 0.3s',
-        }}>{listening?'⏹':'🎤'}</button>
+        }}>{listening ? (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:listening?'#ef4444':'#4dabf7'}}>
+              <rect x="9" y="2" width="6" height="11" rx="3"/>
+              <path d="M5 10a7 7 0 0 0 14 0"/>
+              <line x1="12" y1="19" x2="12" y2="22"/>
+              <line x1="8" y1="22" x2="16" y2="22"/>
+            </svg>
+          ) : (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:'#4dabf7'}}>
+              <rect x="9" y="2" width="6" height="11" rx="3"/>
+              <path d="M5 10a7 7 0 0 0 14 0"/>
+              <line x1="12" y1="19" x2="12" y2="22"/>
+              <line x1="8" y1="22" x2="16" y2="22"/>
+            </svg>
+          )}</button>
         <div style={{ marginTop:6, fontSize:9, color:'#adb5bd', letterSpacing:'0.1em', textTransform:'uppercase' }}>
           {listening?'Listening...':'Tap to speak'}
         </div>
