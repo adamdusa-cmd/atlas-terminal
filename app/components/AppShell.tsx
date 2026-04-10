@@ -257,8 +257,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     onMouseEnter={e => (e.currentTarget.style.background='rgba(255,255,255,0.04)')}
                     onMouseLeave={e => (e.currentTarget.style.background='transparent')}
                   >
-                    <span style={{ fontSize:9, fontWeight:700, letterSpacing:'0.12em',
-                      color:'#f8f9fa', textTransform:'uppercase', fontFamily:'Inter, sans-serif',
+                    <span style={{ fontSize:9, fontWeight:600, letterSpacing:'0.12em',
+                      color:'#adb5bd', textTransform:'uppercase', fontFamily:'Inter, sans-serif',
                     }}>{section.section}</span>
                   </div>
                 </Link>

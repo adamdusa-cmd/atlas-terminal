@@ -106,6 +106,24 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Universe Stats */}
+      <div className="atlas-card" style={{ marginBottom:8 }}>
+        <div className="atlas-label" style={{ marginBottom:8 }}>Universe</div>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8 }}>
+          {[
+            { label:'Instruments',  value: data?.universe?.total ?? '10,000+', color:'#4dabf7' },
+            { label:'Active Scan',  value: data?.universe?.active ?? '50',     color:'#4dabf7' },
+            { label:'Nodes',        value: '46',                                color:'#4dabf7' },
+            { label:'Session',      value: data?.session?.current ?? 'GLOBAL', color:'#4dabf7' },
+          ].map(s => (
+            <div key={s.label} style={{ textAlign:'center' }}>
+              <div style={{ fontSize:20, fontWeight:700, color:s.color }}>{s.value}</div>
+              <div className="atlas-label">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Positions table */}
       {positions.length > 0 && (
         <div className="atlas-card">
