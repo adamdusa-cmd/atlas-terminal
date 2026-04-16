@@ -1,4 +1,4 @@
-const BASE = process.env.NEXT_PUBLIC_API_URL || 'https://atlas-scheduler-production-a62e.up.railway.app'
+const BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.atlastrade.net'
 
 async function fetchJSON<T>(endpoint: string): Promise<T | null> {
   try {
@@ -27,4 +27,4 @@ export const api = {
   intelligence: (message: string, history: any[]) => fetchJSON('/api/intelligence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message, history }) }),
 }
 
-export const WS_URL = 'wss://atlas-scheduler-production-a62e.up.railway.app/ws/live'
+export const WS_URL = 'wss://api.atlastrade.net/ws/live'
